@@ -365,8 +365,7 @@ class BotManager:
         args = message.content.split()
         command = args[0].lower()
 
-        # !controlpanel
-        if len(args) == 1:
+        if len(args) == 1 and command == "!controlpanel":
             response = (
                 "**Welcome to the AI World Control Panel.**\n\n"
                 "**Usage:**\n"
@@ -411,11 +410,11 @@ class BotManager:
                 await message.author.send(f"Invalid emotion '{emotion}'."); return
             try:
                 new_value = float(value_str)
-                if not 0.0 <= new_value <= 1.0: raise ValueError()
+                if not 0.0 <= new_value <= 1.0: raise ValueError("Value must be between 0.0 and 1.0.")
                 target_bot.emotions[emotion] = new_value
                 await message.author.send(f"Updated {target_bot.name}'s **{emotion}** to **{new_value:.2f}**.")
-            except ValueError:
-                await message.author.send("Invalid value. Please provide a number between 0.0 and 1.0.")
+            except ValueError as e:
+                await message.author.send(f"Invalid value. Please provide a number between 0.0 and 1.0. Error: {e}")
 
         elif subcommand == "memory" and len(args) > 3:
             action, channel_id = args[2].lower(), args[3]

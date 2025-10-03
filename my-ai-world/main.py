@@ -17,12 +17,12 @@ if not all([TOKEN, GUILD_ID_STR]) or "YOUR_DISCORD_BOT_TOKEN_HERE" in TOKEN:
 
 GUILD_ID = int(GUILD_ID_STR)
 
-# Set up Discord intents
+# Set up Discord intents, including for voice
 intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 intents.message_content = True
-intents.voice_states = True # Required for voice functionality
+intents.voice_states = True
 
 # Initialize the Discord client and the BotManager
 client = discord.Client(intents=intents)
