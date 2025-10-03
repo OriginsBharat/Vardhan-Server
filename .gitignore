@@ -1,0 +1,15 @@
+# Ignore environment files
+.env
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore generated files
+tts_output.wav
+conversation_history.json
+last_active.txt
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

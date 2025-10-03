@@ -1,0 +1,35 @@
+{
+    "user_profiles": {
+        "MASTER": {
+            "wallet": 999999999,
+            "inventory": []
+        }
+    },
+    "bot_wallets": {
+        "Maya": 1000,
+        "Eka": 1000,
+        "Dvi": 1000,
+        "Tri": 1000,
+        "Chatur": 1000,
+        "Panch": 1000,
+        "Shash": 1000,
+        "Sapt": 1000,
+        "Asht": 1000,
+        "Nav": 1000,
+        "Dash": 1000
+    },
+    "shop_items": {
+        "virtual_coffee": {
+            "price": 5,
+            "description": "A warm cup of virtual coffee. Gives a small energy boost."
+        },
+        "data_packet": {
+            "price": 25,
+            "description": "A packet of interesting information from the web."
+        },
+        "artwork_commission_token": {
+            "price": 100,
+            "description": "A token to commission a piece of art from Asht."
+        }
+    }
+}

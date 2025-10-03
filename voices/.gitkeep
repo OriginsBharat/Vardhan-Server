@@ -1,0 +1,8 @@
+# This file is a placeholder to ensure the 'voices' directory is created.
+# Please place your .wav voice sample files in this directory.
+# For example:
+# - Maya.wav
+# - Eka.wav
+# - Tri.wav
+# etc.
+# The bot will use these files to generate custom voices for each character.
