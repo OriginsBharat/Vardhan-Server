@@ -1,0 +1,11 @@
+# Core Libraries
+discord.py
+python-dotenv
+httpx
+pynacl
+
+# AI & Database
+chromadb  # For the "Universe" vector memory system
+websockets # For ComfyUI API communication
+
+# Note: Further dependencies might be added as clients for other services are built.

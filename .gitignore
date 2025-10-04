@@ -1,0 +1,30 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Package distribution
+*.egg-info/
+dist/
+build/
+
+# Logs and databases
+*.log
+logs/
+*.db
+*.sqlite3
+data/
+art_gallery/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Secrets - to prevent accidental commits
+.env
