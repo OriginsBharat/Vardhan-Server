@@ -11,9 +11,15 @@ class Config:
     It provides a single, validated source of truth for all secrets and settings.
     """
     def __init__(self):
-        # Load environment variables from a .env file if it exists.
-        # This is especially useful for local development.
-        load_dotenv()
+        # Explicitly define the path to the .env file in the project root.
+        # This makes the application robust, regardless of where it's launched from.
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dotenv_path = os.path.join(project_root, '.env')
+
+        if not os.path.exists(dotenv_path):
+             raise ValueError(f"CRITICAL ERROR: .env file not found at path: {dotenv_path}")
+
+        load_dotenv(dotenv_path=dotenv_path)
 
         # --- Discord Secrets ---
         self.DISCORD_BOT_TOKEN: str = self._get_env("DISCORD_BOT_TOKEN")
@@ -43,6 +49,10 @@ class Config:
             raise ValueError(f"CRITICAL ERROR: Missing required environment variable '{key}'. Please check your .env file.")
 
         if "YOUR_" in value:
-            raise ValueError(f"CRITICAL ERROR: Placeholder value for '{key}' found. Please fill in your actual credentials in the .env file.")
+            # This is a special check for the initial setup. We will allow FAKE_TOKEN for testing.
+            if key == "DISCORD_BOT_TOKEN" and value == "FAKE_TOKEN_FOR_TESTING":
+                pass
+            else:
+                raise ValueError(f"CRITICAL ERROR: Placeholder value for '{key}' found. Please fill in your actual credentials in the .env file.")
 
         return value
