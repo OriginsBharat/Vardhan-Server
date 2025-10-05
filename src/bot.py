@@ -13,7 +13,7 @@ from src.core.economic_system.economy_manager import EconomyManager
 from src.core.economic_system.jobs import JobManager
 from src.core.economic_system.shop import ShopManager
 from src.core.economic_system.auction_house import AuctionHouse
-from src.core.event_system.event_ai import EventAI
+from src.core.world_state.event_ai import EventAI
 from src.core.art_system.art_generator import ArtGenerator
 from src.core.voice_system.voice_manager import VoiceManager
 from src.core.world_state.scheduler import Scheduler
