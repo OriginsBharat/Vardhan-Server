@@ -6,6 +6,6 @@ pynacl
 
 # AI & Database
 chromadb  # For the "Universe" vector memory system
-websockets # For ComfyUI API communication
+resemble-chatterbox # The new, simpler voice cloning engine
 
 # Note: Further dependencies might be added as clients for other services are built.

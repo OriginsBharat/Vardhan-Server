@@ -15,7 +15,7 @@ from src.core.economic_system.shop import ShopManager
 from src.core.economic_system.auction_house import AuctionHouse
 from src.core.world_state.event_ai import EventAI
 from src.core.art_system.art_generator import ArtGenerator
-from src.core.voice_system.voice_manager import VoiceManager
+from src.core.ai_services.chatterbox_client import ChatterboxClient
 from src.core.world_state.scheduler import Scheduler
 from src.core.world_state.simulation import SimulationManager
 from src.commands.control_panel import ControlPanelCommand
@@ -41,7 +41,7 @@ class MasterBot(discord.Client):
         self.job_manager = JobManager(self.economy_manager)
         self.shop_manager = ShopManager(self.economy_manager)
         self.art_generator = ArtGenerator(self.config)
-        self.voice_manager = VoiceManager(self.config)
+        self.voice_client = ChatterboxClient()
 
         self.auction_house = AuctionHouse(self.config, self.economy_manager, self)
         self.event_ai = EventAI(self.config, self)
