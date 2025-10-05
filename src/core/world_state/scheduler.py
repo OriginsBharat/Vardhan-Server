@@ -9,7 +9,7 @@ from typing import List, Optional
 import discord
 
 from src.core.character_system.personas import Character
-from src.core.economic_system.job_manager import JobManager
+from src.core.economic_system.jobs import JobManager
 
 class Scheduler:
     """

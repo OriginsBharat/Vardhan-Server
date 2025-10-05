@@ -10,8 +10,8 @@ from typing import List, Optional
 from src.config import Config
 from src.core.character_system.personas import load_all_personas, Character
 from src.core.economic_system.economy_manager import EconomyManager
-from src.core.economic_system.job_manager import JobManager
-from src.core.economic_system.shop_manager import ShopManager
+from src.core.economic_system.jobs import JobManager
+from src.core.economic_system.shop import ShopManager
 from src.core.economic_system.auction_house import AuctionHouse
 from src.core.event_system.event_ai import EventAI
 from src.core.art_system.art_generator import ArtGenerator
