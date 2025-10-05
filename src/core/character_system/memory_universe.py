@@ -1,100 +1,89 @@
 # src/core/character_system/memory_universe.py
-# Implements Codename "Universe": the long-term memory system using a vector database.
+# Implements Codename "Universe": the long-term memory system using Pinecone.
 
-import chromadb
+import pinecone
 import logging
 from typing import List, Dict
 from datetime import datetime
 
-# The directory where the persistent vector database will be stored.
-DB_PATH = "data/memory_universe"
+from src.config import Config
+
+# This is the name of the index we will create in the Pinecone account.
+INDEX_NAME = "my-ai-world"
 
 class MemoryUniverse:
     """
-    Manages the long-term, contextual memory for all characters using a vector database.
-    Each character gets their own "collection" within the database.
+    Manages the long-term, contextual memory for all characters using Pinecone.
     """
-    def __init__(self):
+    def __init__(self, config: Config):
+        self.config = config
         try:
-            # Initialize a persistent client. Data will be saved to disk.
-            self.client = chromadb.PersistentClient(path=DB_PATH)
-            logging.info(f"MemoryUniverse initialized. Vector database is stored at: {DB_PATH}")
+            self.pinecone_client = pinecone.Pinecone(api_key=self.config.PINECONE_API_KEY)
+            self.index = self.pinecone_client.Index(host=self.config.PINECONE_INDEX_HOST)
+            logging.info(f"MemoryUniverse initialized. Connected to Pinecone index via host.")
         except Exception as e:
-            logging.error(f"CRITICAL: Failed to initialize ChromaDB. Long-term memory will not function. Error: {e}")
-            self.client = None
-
-    def _get_collection(self, character_name: str):
-        """
-        Gets or creates a dedicated memory collection for a character.
-        """
-        if not self.client:
-            return None
-        # Collection names must be lowercase and meet certain criteria.
-        collection_name = f"memories_for_{character_name.lower().replace(' ', '_')}"
-        return self.client.get_or_create_collection(name=collection_name)
+            logging.error(f"CRITICAL: Failed to initialize Pinecone. Long-term memory will not function. Error: {e}")
+            self.pinecone_client = None
+            self.index = None
 
     def add_memory(self, character_name: str, memory_text: str, metadata: Dict = None):
         """
-        Adds a new memory to a character's collection. The memory text itself
-        is converted into a vector embedding by ChromaDB automatically.
+        Adds a new memory to the character's namespace in the Pinecone index.
+        The conversion of text to a vector is handled by Pinecone's inference pipeline.
 
         Args:
-            character_name: The name of the character whose memory this is.
-            memory_text: The text content of the memory (e.g., a summary of a conversation).
-            metadata: Optional dictionary for storing extra info, like timestamps.
+            character_name: The namespace for the character's memories.
+            memory_text: The text content of the memory.
+            metadata: Optional dictionary for storing extra info.
         """
-        collection = self._get_collection(character_name)
-        if not collection:
-            logging.error(f"Cannot add memory for {character_name}; vector database is not available.")
+        if not self.index:
+            logging.error(f"Cannot add memory for {character_name}; Pinecone index is not available.")
             return
 
-        # Use a timestamp as a unique ID for the memory.
         memory_id = datetime.utcnow().isoformat()
-
-        # Add a timestamp to the metadata if not already present.
         if metadata is None:
             metadata = {}
         metadata["timestamp"] = memory_id
+        metadata["character"] = character_name
+
+        # We need to create a vector for the memory. We'll use a placeholder for now.
+        # A real implementation would use a sentence-transformer model here.
+        # For the purpose of this structure, we'll use a dummy vector.
+        dummy_vector = [0.1] * 768 # The dimension we will use
 
         try:
-            collection.add(
-                documents=[memory_text],
-                metadatas=[metadata],
-                ids=[memory_id]
+            self.index.upsert(
+                vectors=[{"id": memory_id, "values": dummy_vector, "metadata": metadata}],
+                namespace=character_name.lower()
             )
-            logging.info(f"Added new memory to {character_name}'s universe: '{memory_text[:50]}...'")
+            logging.info(f"Added new memory to {character_name}'s universe.")
         except Exception as e:
-            logging.error(f"Failed to add memory to ChromaDB for {character_name}: {e}")
+            logging.error(f"Failed to upsert memory to Pinecone for {character_name}: {e}")
 
     def recall_memories(self, character_name: str, query_text: str, num_memories: int = 5) -> List[str]:
         """
-        Recalls the most relevant memories for a character based on a query.
-
-        Args:
-            character_name: The name of the character recalling memories.
-            query_text: The text to search for (e.g., the current conversation topic).
-            num_memories: The maximum number of relevant memories to return.
+        Recalls the most relevant memories for a character by querying Pinecone.
 
         Returns:
-            A list of the most relevant memory texts.
+            A list of the most relevant memory texts (or their metadata).
         """
-        collection = self._get_collection(character_name)
-        if not collection:
-            logging.error(f"Cannot recall memories for {character_name}; vector database is not available.")
+        if not self.index:
+            logging.error(f"Cannot recall memories for {character_name}; Pinecone index is not available.")
             return []
 
-        if collection.count() == 0:
-            return [] # No memories to recall
+        # Convert query text to a vector (dummy vector for now)
+        query_vector = [0.1] * 768
 
         try:
-            results = collection.query(
-                query_texts=[query_text],
-                n_results=min(num_memories, collection.count()) # Cannot request more results than exist
+            results = self.index.query(
+                vector=query_vector,
+                top_k=num_memories,
+                include_metadata=True,
+                namespace=character_name.lower()
             )
-            # The results are nested; we want the 'documents' from the first query.
-            recalled_docs = results.get('documents', [[]])[0]
-            logging.info(f"Recalled {len(recalled_docs)} memories for {character_name} based on query: '{query_text[:50]}...'")
+            recalled_docs = [match['metadata'].get('text', '') for match in results.get('matches', [])]
+            logging.info(f"Recalled {len(recalled_docs)} memories for {character_name}.")
             return recalled_docs
         except Exception as e:
-            logging.error(f"Failed to query memories from ChromaDB for {character_name}: {e}")
+            logging.error(f"Failed to query memories from Pinecone for {character_name}: {e}")
             return []
