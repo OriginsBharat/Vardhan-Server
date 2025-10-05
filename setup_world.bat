@@ -79,7 +79,6 @@ set /p DISCORD_BOT_TOKEN="Enter your DISCORD_BOT_TOKEN: "
 set /p DISCORD_GUILD_ID="Enter your DISCORD_GUILD_ID (Server ID): "
 set /p USER_ID="Enter your USER_ID: "
 set /p COMFYUI_PATH="Enter the FULL PATH to your ComfyUI_windows_portable folder: "
-set /p XTTS_PATH="Enter the FULL PATH to your XTTS-Server folder: "
 set /p PINECONE_API_KEY="Enter your Pinecone API Key: "
 set /p PINECONE_INDEX_HOST="Enter your Pinecone Index Host (e.g., 'my-index-123ab.svc.us-west1-gcp.pinecone.io'): "
 
@@ -88,7 +87,7 @@ set /p PINECONE_INDEX_HOST="Enter your Pinecone Index Host (e.g., 'my-index-123a
     echo DISCORD_GUILD_ID=%DISCORD_GUILD_ID%
     echo USER_ID=%USER_ID%
     echo COMFYUI_PATH=%COMFYUI_PATH%
-    echo XTTS_PATH=%XTTS_PATH%
+    echo XTTS_PATH=""
     echo PINECONE_API_KEY=%PINECONE_API_KEY%
     echo PINECONE_INDEX_HOST=%PINECONE_INDEX_HOST%
     echo OLLAMA_API_URL=http://127.0.0.1:11434

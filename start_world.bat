@@ -28,17 +28,9 @@ IF DEFINED COMFYUI_PATH (
     ECHO WARNING: COMFYUI_PATH not set in .env file. Art generation will not work.
 )
 
-REM --- Start XTTS Server (Voice Generation) ---
-REM This also requires a path set in the .env file.
-FOR /F "tokens=1,* delims==" %%A IN ('.env') DO (
-    IF "%%A"=="XTTS_PATH" SET XTTS_PATH=%%B
-)
-IF DEFINED XTTS_PATH (
-    ECHO Starting XTTS voice server...
-    start "" /B /D "%XTTS_PATH%" launcher.bat > nul 2>&1
-) ELSE (
-    ECHO WARNING: XTTS_PATH not set in .env file. Voice generation will not work.
-)
+REM --- Voice Generation (XTTS Server) ---
+REM The XTTS server must be started manually for voice features to be enabled.
+ECHO NOTE: To enable voice features, start the XTTS server manually via its launcher.bat.
 
 REM --- Wait for AI services to initialize ---
 ECHO Waiting for AI services to come online...
