@@ -109,8 +109,9 @@ echo.
 echo Master, as we discussed, you will now define the specific NSFW
 echo kinks for the 11 core members of your world.
 echo.
-echo For each character, please provide a comma-separated list of
-echo their kinks (e.g., vore, gore, submission, praise).
+echo For each character, please provide a SPACE-separated list of their kinks.
+echo For kinks with multiple words, please use an underscore.
+echo Example: vore gore mind_control submission praise
 echo This will be saved securely and used to shape their NSFW behavior.
 echo.
 
@@ -121,28 +122,19 @@ setlocal enabledelayedexpansion
 REM The 11 core personas to be customized by the Master.
 set "characters=Maya Eka Dvi Tri Chatur Panch Shash Sapt Asht Nav Dash"
 set "json_output={"
+set "first_char=true"
 
 for %%c in (%characters%) do (
-    set "char_name=%%c"
-    set /p "kinks_input=Enter comma-separated kinks for !char_name!: "
-
-    REM This is a simple conversion to a JSON array string.
-    set "kinks_json="
-    for %%k in (!kinks_input!) do (
-        set "kink=%%k"
-        REM Trim leading space
-        if "!kink:~0,1!"==" " set "kink=!kink:~1!"
-        REM Trim trailing space
-        if "!kink:~-1!"==" " set "kink=!kink:~0,-1!"
-        set "kinks_json=!kinks_json!\"!kink!\","
+    call :get_kinks_for_char "%%c"
+    if "!first_char!" == "true" (
+        set "json_output=!json_output!!kinks_json_part!"
+        set "first_char=false"
+    ) else (
+        set "json_output=!json_output!,!kinks_json_part!"
     )
-    if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
-
-    set "json_output=!json_output!\"!char_name!\": {\"kinks\": [!kinks_json!]},"
 )
-if defined json_output set "json_output=!json_output:~0,-1!"
-set "json_output=!json_output!}"
 
+if defined json_output set "json_output=!json_output!}"
 (echo %json_output%) > data/character_kinks.json
 
 echo.
@@ -150,6 +142,21 @@ echo [OK] Master's Directives for kinks have been saved to data/character_kinks.
 echo.
 pause
 goto :finalize
+
+:get_kinks_for_char
+set "char_name=%~1"
+set "kinks_input="
+echo.
+set /p "kinks_input=Enter kinks for !char_name!: "
+
+set "kinks_json="
+for %%k in (!kinks_input!) do (
+    set "kinks_json=!kinks_json!\"%%k\","
+)
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+
+set "kinks_json_part=\"!char_name!\": {\"kinks\": [!kinks_json!]}"
+goto :eof
 
 :finalize
 cls
