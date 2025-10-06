@@ -105,15 +105,23 @@ goto :kinks
 cls
 echo.
 echo =================================================================
-echo  Step 3 of 4: Character Customization
+echo  Step 3 of 4: Interactive Kink Customization
 echo =================================================================
 echo.
-echo I will now ask you to define the kinks for each character.
-echo Please provide a comma-separated list for each one.
+echo Master, as we discussed, you will now define the specific NSFW
+echo kinks for the 11 core members of your world.
+echo.
+echo For each character, please provide a comma-separated list of
+echo their kinks (e.g., vore, gore, submission, praise).
+echo This will be saved securely and used to shape their NSFW behavior.
 echo.
 
+REM Ensure the data directory exists
+if not exist "data" mkdir "data"
+
 setlocal enabledelayedexpansion
-set "characters=Maya Eka Sapt Dvi Trini Chatur Panch Shash Asht Nav Dash"
+REM The 11 core personas to be customized by the Master.
+set "characters=Maya Eka Dvi Tri Chatur Panch Shash Sapt Asht Nav Dash"
 set "json_output={"
 
 for %%c in (%characters%) do (
@@ -123,7 +131,12 @@ for %%c in (%characters%) do (
     REM This is a simple conversion to a JSON array string.
     set "kinks_json="
     for %%k in (!kinks_input!) do (
-        set "kinks_json=!kinks_json!\"%%k\","
+        set "kink=%%k"
+        REM Trim leading space
+        if "!kink:~0,1!"==" " set "kink=!kink:~1!"
+        REM Trim trailing space
+        if "!kink:~-1!"==" " set "kink=!kink:~0,-1!"
+        set "kinks_json=!kinks_json!\"!kink!\","
     )
     if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 
@@ -132,10 +145,10 @@ for %%c in (%characters%) do (
 if defined json_output set "json_output=!json_output:~0,-1!"
 set "json_output=!json_output!}"
 
-(echo %json_output%) > data/character_data.json
+(echo %json_output%) > data/character_kinks.json
 
 echo.
-echo [OK] Character customizations have been saved.
+echo [OK] Master's Directives for kinks have been saved to data/character_kinks.json.
 echo.
 pause
 goto :finalize
