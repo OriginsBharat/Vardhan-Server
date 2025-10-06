@@ -87,12 +87,10 @@ set /p PINECONE_INDEX_HOST="Enter your Pinecone Index Host (e.g., 'my-index-123a
     echo DISCORD_GUILD_ID=%DISCORD_GUILD_ID%
     echo USER_ID=%USER_ID%
     echo COMFYUI_PATH=%COMFYUI_PATH%
-    echo XTTS_PATH=""
     echo PINECONE_API_KEY=%PINECONE_API_KEY%
     echo PINECONE_INDEX_HOST=%PINECONE_INDEX_HOST%
     echo OLLAMA_API_URL=http://127.0.0.1:11434
     echo COMFYUI_API_URL=http://127.0.0.1:8188
-    echo XTTS_API_URL=http://127.0.0.1:8010
 ) > .env
 
 echo.

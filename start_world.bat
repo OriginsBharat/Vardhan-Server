@@ -28,9 +28,9 @@ IF DEFINED COMFYUI_PATH (
     ECHO WARNING: COMFYUI_PATH not set in .env file. Art generation will not work.
 )
 
-REM --- Voice Generation (XTTS Server) ---
-REM The XTTS server must be started manually for voice features to be enabled.
-ECHO NOTE: To enable voice features, start the XTTS server manually via its launcher.bat.
+REM --- Voice Generation (Chatterbox) ---
+REM The new Chatterbox voice engine is a Python library and does not require a separate server.
+REM It will be initialized directly by the main bot application.
 
 REM --- Wait for AI services to initialize ---
 ECHO Waiting for AI services to come online...
