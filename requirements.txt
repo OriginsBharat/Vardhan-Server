@@ -5,7 +5,8 @@ httpx
 pynacl
 
 # AI & Database
-chromadb  # For the "Universe" vector memory system
-resemble-chatterbox # The new, simpler voice cloning engine
+pinecone-client
+sentence-transformers
 
-# Note: Further dependencies might be added as clients for other services are built.
+# Voice Engine
+resemble-chatterbox
