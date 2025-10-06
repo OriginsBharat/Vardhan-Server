@@ -4,6 +4,8 @@
 import discord
 import logging
 import asyncio
+import random
+import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -13,13 +15,12 @@ from src.core.economic_system.economy_manager import EconomyManager
 from src.core.economic_system.jobs import JobManager
 from src.core.economic_system.shop import ShopManager
 from src.core.economic_system.auction_house import AuctionHouse
-from src.core.world_state.event_ai import EventAI
-from src.core.art_system.art_generator import ArtGenerator
+from src.core.ai_services.ollama_client import OllamaClient
 from src.core.ai_services.chatterbox_client import ChatterboxClient
 from src.core.world_state.scheduler import Scheduler
 from src.core.world_state.simulation import SimulationManager
 from src.commands.control_panel import ControlPanelCommand
-from src.utils.discord_utils import send_dm
+from src.utils.discord_utils import send_dm, create_embed
 
 class MasterBot(discord.Client):
     """
@@ -30,6 +31,7 @@ class MasterBot(discord.Client):
         intents.message_content = True
         intents.messages = True
         intents.guilds = True
+        intents.voice_states = True
         super().__init__(intents=intents)
 
         self.config = config
@@ -40,40 +42,14 @@ class MasterBot(discord.Client):
         self.economy_manager = EconomyManager(master_user_id=self.config.USER_ID)
         self.job_manager = JobManager(self.economy_manager)
         self.shop_manager = ShopManager(self.economy_manager)
-        self.art_generator = ArtGenerator(self.config)
+        self.ollama_client = OllamaClient(config)
         self.voice_client = ChatterboxClient()
-
-        self.auction_house = AuctionHouse(self.config, self.economy_manager, self)
-        self.event_ai = EventAI(self.config, self)
-        self.scheduler = Scheduler(self.personas, self, self.job_manager)
         self.simulation_manager = SimulationManager(self.personas, self.job_manager)
 
         # --- Initialize Command Handlers ---
         self.control_panel_command = ControlPanelCommand(self.personas)
 
         logging.info("MasterBot initialized with all subsystems.")
-
-    async def _trial_countdown_loop(self):
-        """A background task to check for VPS trial expiration."""
-        await self.wait_until_ready()
-        while not self.is_closed():
-            if self.config.TRIAL_END_DATE:
-                try:
-                    end_date = datetime.strptime(self.config.TRIAL_END_DATE, "%Y-%m-%d")
-                    now = datetime.now()
-                    remaining = end_date - now
-
-                    if timedelta(days=0) < remaining <= timedelta(days=3):
-                        master_user = self.get_user(self.config.USER_ID)
-                        if master_user:
-                            logging.info(f"VPS trial ending soon. Notifying Master. Days left: {remaining.days}")
-                            await send_dm(master_user, f"**WARNING, MASTER:** Your VPS trial period ends in {remaining.days} day(s) on {self.config.TRIAL_END_DATE}. Please prepare for migration.")
-                except ValueError:
-                    logging.error("Invalid date format for TRIAL_END_DATE in .env file. Please use YYYY-MM-DD.")
-                except Exception as e:
-                    logging.error(f"An error occurred in the trial countdown loop: {e}")
-
-            await asyncio.sleep(86400) # Wait 24 hours
 
     async def on_ready(self):
         """Called when the bot is ready and connected to Discord."""
@@ -84,32 +60,79 @@ class MasterBot(discord.Client):
             return
 
         logging.info(f'Logged in as {self.user} and connected to guild: {self.guild.name}')
-
-        # Run the offline simulation before starting other loops
         self.simulation_manager.run_offline_simulation()
 
-        # Start all background loops
-        self.auction_house.start_loop()
-        self.event_ai.start_loop()
-        self.scheduler.start_loop()
-        self.loop.create_task(self._trial_countdown_loop())
-
-        print("\n--- My AI World v4 is Online ---")
+        print("\\n--- My AI World is Online ---")
         print(f"Connected to: {self.guild.name}")
         print("All systems running. Awaiting Master's command.")
 
     async def on_message(self, message: discord.Message):
-        if message.author == self.user: return
-
-        # Handle commands from the Master in the designated control channel
-        if message.channel.id == self.config.DISCORD_CONTROL_CHANNEL_ID and \
-           message.author.id == self.config.USER_ID and \
-           message.content.startswith('!'):
-            await self.handle_command(message)
+        if message.author.bot:
             return
 
+        if message.content.startswith('!'):
+            if message.author.id == self.config.USER_ID:
+                 await self.handle_command(message)
+            return
+
+        if self.user.mentioned_in(message) or (random.random() < 0.1):
+            responder = random.choice(self.personas)
+
+            prompt = f"You are {responder.name}. Your personality is: {responder.personality_summary}. The user '{message.author.name}' said: '{message.content}'. How do you reply?"
+
+            async with message.channel.typing():
+                response_text = await self.ollama_client.get_completion(prompt)
+
+            if response_text:
+                embed = create_embed(title=f"{responder.name} says:", description=response_text, color=discord.Color.from_str(responder.aura_color))
+                await message.channel.send(embed=embed)
+
+                if message.author.voice and message.author.voice.channel:
+                    await self.play_voice_response(responder, response_text, message.author.voice.channel)
+
+    async def play_voice_response(self, character: Character, text: str, voice_channel: discord.VoiceChannel):
+        logging.info(f"Attempting to play voice response for {character.name} in {voice_channel.name}")
+
+        speaker_wav_path = f"data/voices/{character.name}.wav"
+        if not os.path.exists(speaker_wav_path):
+            logging.warning(f"No voice file found for {character.name} at {speaker_wav_path}. Skipping TTS. Please add a voice file to this path.")
+            return
+
+        audio_file_path = self.voice_client.generate_speech(text, speaker_wav_path)
+
+        if not audio_file_path:
+            logging.error(f"Failed to generate speech audio file for {character.name}.")
+            return
+
+        vc = discord.utils.get(self.voice_clients, guild=voice_channel.guild)
+        try:
+            if vc and vc.is_connected():
+                if vc.channel != voice_channel:
+                    await vc.move_to(voice_channel)
+            else:
+                vc = await voice_channel.connect()
+
+            if vc.is_playing():
+                vc.stop()
+
+            source = discord.FFmpegPCMAudio(audio_file_path)
+            vc.play(source, after=lambda e: logging.error(f'Player error: {e}') if e else None)
+
+            while vc.is_playing():
+                await asyncio.sleep(0.5)
+
+            await asyncio.sleep(1)
+            await vc.disconnect(force=True)
+
+        except Exception as e:
+            logging.error(f"Error playing TTS for {character.name}: {e}")
+            if vc and vc.is_connected():
+                await vc.disconnect(force=True)
+        finally:
+            if audio_file_path and os.path.exists(audio_file_path):
+                os.remove(audio_file_path)
+
     async def handle_command(self, message: discord.Message):
-        """Parses and executes commands from the Master."""
         command = message.content.lower().split()[0]
 
         if command in ["!set", "!status"]:

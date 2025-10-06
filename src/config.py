@@ -28,10 +28,8 @@ class Config:
 
         # --- Local AI Service Paths & URLs ---
         self.COMFYUI_PATH: str = self._get_env("COMFYUI_PATH")
-        self.XTTS_PATH: str = self._get_env("XTTS_PATH")
         self.OLLAMA_API_URL: str = self._get_env("OLLAMA_API_URL", "http://127.0.0.1:11434")
         self.COMFYUI_API_URL: str = self._get_env("COMFYUI_API_URL", "http://127.0.0.1:8188")
-        self.XTTS_API_URL: str = self._get_env("XTTS_API_URL", "http://127.0.0.1:8010")
 
         # --- Cloud Memory (Pinecone) ---
         self.PINECONE_API_KEY: str = self._get_env("PINECONE_API_KEY")
