@@ -24,7 +24,7 @@ def main():
     pinecone_api_key = get_user_input("Enter your Pinecone API Key: ")
     pinecone_index_host = get_user_input("Enter your Pinecone Index Host: ")
 
-    env_content = f\"\"\"
+    env_content = f"""
 DISCORD_BOT_TOKEN={discord_bot_token}
 DISCORD_GUILD_ID={discord_guild_id}
 USER_ID={user_id}
@@ -33,7 +33,7 @@ PINECONE_API_KEY={pinecone_api_key}
 PINECONE_INDEX_HOST={pinecone_index_host}
 OLLAMA_API_URL=http://127.0.0.1:11434
 COMFYUI_API_URL=http://127.0.0.1:8188
-\"\"\"
+"""
     with open(".env", "w") as f:
         f.write(env_content)
 
