@@ -78,7 +78,7 @@ echo automatic, invisible startup process.
 echo.
 
 echo Installing Python packages...
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to install Python packages. Please check requirements.txt and your connection.
     pause
