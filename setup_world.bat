@@ -129,6 +129,7 @@ set /p "kinks_input=Enter kinks for Maya: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!\"Maya\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Maya recorded. & pause
 
 REM --- Eka ---
 echo.
@@ -136,6 +137,7 @@ set /p "kinks_input=Enter kinks for Eka: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Eka\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Eka recorded. & pause
 
 REM --- Dvi ---
 echo.
@@ -143,6 +145,7 @@ set /p "kinks_input=Enter kinks for Dvi: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Dvi\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Dvi recorded. & pause
 
 REM --- Tri ---
 echo.
@@ -150,6 +153,7 @@ set /p "kinks_input=Enter kinks for Tri: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Tri\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Tri recorded. & pause
 
 REM --- Chatur ---
 echo.
@@ -157,6 +161,7 @@ set /p "kinks_input=Enter kinks for Chatur: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Chatur\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Chatur recorded. & pause
 
 REM --- Panch ---
 echo.
@@ -164,6 +169,7 @@ set /p "kinks_input=Enter kinks for Panch: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Panch\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Panch recorded. & pause
 
 REM --- Shash ---
 echo.
@@ -171,6 +177,7 @@ set /p "kinks_input=Enter kinks for Shash: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Shash\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Shash recorded. & pause
 
 REM --- Sapt ---
 echo.
@@ -178,6 +185,7 @@ set /p "kinks_input=Enter kinks for Sapt: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Sapt\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Sapt recorded. & pause
 
 REM --- Asht ---
 echo.
@@ -185,6 +193,7 @@ set /p "kinks_input=Enter kinks for Asht: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Asht\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Asht recorded. & pause
 
 REM --- Nav ---
 echo.
@@ -192,6 +201,7 @@ set /p "kinks_input=Enter kinks for Nav: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Nav\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Nav recorded. & pause
 
 REM --- Dash ---
 echo.
@@ -199,6 +209,7 @@ set /p "kinks_input=Enter kinks for Dash: "
 set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
 if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
 set "json_output=!json_output!,\"Dash\": {\"kinks\": [!kinks_json!]}"
+echo Kinks for Dash recorded. & pause
 
 set "json_output=!json_output!}"
 (echo %json_output%) > data/character_kinks.json
@@ -206,7 +217,6 @@ set "json_output=!json_output!}"
 echo.
 echo [OK] Master's Directives for kinks have been saved to data/character_kinks.json.
 echo.
-pause
 goto :finalize
 
 :finalize
