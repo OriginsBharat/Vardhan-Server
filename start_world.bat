@@ -37,7 +37,7 @@ ECHO Waiting for AI services to come online...
 timeout /t 45 /nobreak > nul
 
 REM --- Start the Main Bot Application ---
-ECHO Starting the main bot...
-start "" /B python -m src.main > nul 2>&1
+ECHO Starting the main bot using the local virtual environment...
+start "" /B venv\Scripts\python.exe -m src.main > nul 2>&1
 
 ECHO All services have been launched in the background. The world is now online.

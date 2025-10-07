@@ -78,12 +78,24 @@ echo automatic, invisible startup process.
 echo.
 
 echo Installing Python packages...
-python -m pip install -r requirements.txt
+echo.
+echo Creating a local Python virtual environment to bypass system issues...
+python -m venv venv
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Python packages. Please check requirements.txt and your connection.
+    echo [ERROR] Failed to create a Python virtual environment. Please check your Python installation.
     pause
     exit
 )
+echo.
+echo Installing packages into the new virtual environment...
+call venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to install Python packages into the virtual environment. Please check requirements.txt and your connection.
+    pause
+    exit
+)
+deactivate
 echo.
 
 echo Creating invisible launcher shortcut in your Windows Startup folder...
