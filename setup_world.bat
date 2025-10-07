@@ -88,14 +88,12 @@ if %errorlevel% neq 0 (
 )
 echo.
 echo Installing packages into the new virtual environment...
-call venv\Scripts\activate.bat
-python -m pip install -r requirements.txt
+venv\Scripts\python.exe -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to install Python packages into the virtual environment. Please check requirements.txt and your connection.
     pause
     exit
 )
-deactivate
 echo.
 
 echo Creating invisible launcher shortcut in your Windows Startup folder...
