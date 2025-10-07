@@ -9,4 +9,4 @@ pinecone-client
 sentence-transformers
 
 # Voice Engine
-resemble-chatterbox
+chatterbox
