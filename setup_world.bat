@@ -119,22 +119,88 @@ REM Ensure the data directory exists
 if not exist "data" mkdir "data"
 
 setlocal enabledelayedexpansion
-REM The 11 core personas to be customized by the Master.
-set "characters=Maya Eka Dvi Tri Chatur Panch Shash Sapt Asht Nav Dash"
+
+REM --- Explicitly handle each character one by one to prevent input bugs ---
 set "json_output={"
-set "first_char=true"
 
-for %%c in (%characters%) do (
-    call :get_kinks_for_char "%%c"
-    if "!first_char!" == "true" (
-        set "json_output=!json_output!!kinks_json_part!"
-        set "first_char=false"
-    ) else (
-        set "json_output=!json_output!,!kinks_json_part!"
-    )
-)
+REM --- Maya ---
+echo.
+set /p "kinks_input=Enter kinks for Maya: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!\"Maya\": {\"kinks\": [!kinks_json!]}"
 
-if defined json_output set "json_output=!json_output!}"
+REM --- Eka ---
+echo.
+set /p "kinks_input=Enter kinks for Eka: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Eka\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Dvi ---
+echo.
+set /p "kinks_input=Enter kinks for Dvi: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Dvi\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Tri ---
+echo.
+set /p "kinks_input=Enter kinks for Tri: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Tri\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Chatur ---
+echo.
+set /p "kinks_input=Enter kinks for Chatur: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Chatur\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Panch ---
+echo.
+set /p "kinks_input=Enter kinks for Panch: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Panch\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Shash ---
+echo.
+set /p "kinks_input=Enter kinks for Shash: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Shash\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Sapt ---
+echo.
+set /p "kinks_input=Enter kinks for Sapt: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Sapt\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Asht ---
+echo.
+set /p "kinks_input=Enter kinks for Asht: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Asht\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Nav ---
+echo.
+set /p "kinks_input=Enter kinks for Nav: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Nav\": {\"kinks\": [!kinks_json!]}"
+
+REM --- Dash ---
+echo.
+set /p "kinks_input=Enter kinks for Dash: "
+set "kinks_json=" & for %%k in (!kinks_input!) do (set "kinks_json=!kinks_json!\"%%k\",")
+if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
+set "json_output=!json_output!,\"Dash\": {\"kinks\": [!kinks_json!]}"
+
+set "json_output=!json_output!}"
 (echo %json_output%) > data/character_kinks.json
 
 echo.
@@ -142,21 +208,6 @@ echo [OK] Master's Directives for kinks have been saved to data/character_kinks.
 echo.
 pause
 goto :finalize
-
-:get_kinks_for_char
-set "char_name=%~1"
-set "kinks_input="
-echo.
-set /p "kinks_input=Enter kinks for !char_name!: "
-
-set "kinks_json="
-for %%k in (!kinks_input!) do (
-    set "kinks_json=!kinks_json!\"%%k\","
-)
-if defined kinks_json set "kinks_json=!kinks_json:~0,-1!"
-
-set "kinks_json_part=\"!char_name!\": {\"kinks\": [!kinks_json!]}"
-goto :eof
 
 :finalize
 cls
