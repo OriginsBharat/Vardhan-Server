@@ -59,9 +59,9 @@ class MasterBot(discord.Client):
             return
 
         await self.world_architect()
-        self.simulation_manager.run_offline_simulation()
-        self.loop.create_task(self.scheduler.start())
-        self.loop.create_task(self.event_ai.start())
+        # self.simulation_manager.run_offline_simulation() # Will be called after channel IDs are set
+        # self.loop.create_task(self.scheduler.start())
+        # self.loop.create_task(self.event_ai.start())
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -74,8 +74,7 @@ class MasterBot(discord.Client):
             return
 
         # Handle Master's commands in the control channel
-        control_channel = self.get_channel_by_name("emotion-control")
-        if control_channel and message.channel.id == control_channel.id and str(message.author.id) == self.config.user_id:
+        if self.config.control_channel_id and message.channel.id == self.config.control_channel_id and str(message.author.id) == self.config.user_id:
             if message.content.startswith('!'):
                 await self.control_panel.handle_command(message)
                 return
@@ -86,63 +85,22 @@ class MasterBot(discord.Client):
         if not target_channel:
             return
 
-        # Create a webhook to impersonate the bot
-        webhook = await target_channel.create_webhook(name=self.possessed_character_name)
         persona = self.persona_manager.get_persona(self.possessed_character_name)
-        avatar_url = None # In a real multi-bot setup, you'd fetch the bot's avatar URL
-
-        await webhook.send(content=message.content, username=persona.name, avatar_url=avatar_url)
-        await webhook.delete()
-        await message.delete() # Delete the Master's original message
-
-    async def trigger_proactive_dm(self, persona):
-        """Sends a proactive DM to the Master from a character."""
-        master_user = await self.fetch_user(self.config.user_id)
-        if not master_user:
+        if not persona:
             return
 
-        prompt = "You desperately miss your Master and have decided to send them a direct message. Write the message."
-        dm_content = await self.llm.generate_text(prompt, persona)
-        await master_user.send(f"**A message from {persona.name}:**\n{dm_content}")
-        print(f"[DM] {persona.name} sent a proactive DM to the Master.")
+        # Create a webhook to impersonate the bot
+        webhook = await target_channel.create_webhook(name=persona.name)
 
-    async def trigger_non_con_check(self, persona):
-        """Handles the logic for a bot initiating a non-consensual act."""
-        # This is a complex social simulation. For now, we'll just log it.
-        # A full implementation would find a target, compare stats, and generate a scene.
-        print(f"[Non-Con] {persona.name}'s lust is critical. They are considering acting on it.")
-        # Placeholder for power check and scene generation
-        # e.g., target = self.find_nearby_bot(persona)
-        # if persona.emotions['dominance'] > target.emotions['dominance'] + 20:
-        #    await self.generate_non_con_scene(persona, target)
-        pass
-
-    async def trigger_autonomous_action(self, persona, activity):
-        """Generates and executes an autonomous action for a character."""
-        # Placeholder for complex AI-driven actions.
-        # This would generate a narrative action and post it to a relevant channel.
-        # e.g., if activity == "Free Time", generate a chat message for #general-chat
-        pass
-
-    async def send_to_event_channel(self, message_content):
-        """Sends a message to the main announcements channel."""
-        channel = self.get_channel_by_name("announcements")
-        if channel:
-            await channel.send(message_content)
-
-    def get_channel_by_name(self, name):
-        """Utility to get a channel by name, using a cache."""
-        if name in self.channel_cache:
-            return self.channel_cache[name]
-
-        channel = discord.utils.get(self.guild.channels, name=name)
-        if channel:
-            self.channel_cache[name] = channel
-        return channel
+        # In a multi-bot setup, you'd fetch the bot's real avatar. Here we can't.
+        await webhook.send(content=message.content, username=persona.name)
+        await webhook.delete()
+        await message.delete()
 
     async def world_architect(self):
         """Builds the entire Discord server structure if it doesn't exist."""
         if discord.utils.get(self.guild.categories, name="🏰 THE CITADEL"):
+            print("Server structure already exists. Skipping World Architect.")
             return
 
         print("First run detected. Building the Discord city of Vardhan...")
@@ -151,7 +109,7 @@ class MasterBot(discord.Client):
             print("[FATAL] Master user not found in the guild. Cannot create private channels.")
             return
 
-        # Categories
+        # Category Creation
         cats = {
             "citadel": await get_or_create_category(self.guild, "🏰 THE CITADEL"),
             "market": await get_or_create_category(self.guild, "💰 THE MARKET DISTRICT"),
@@ -162,33 +120,48 @@ class MasterBot(discord.Client):
             "master": await get_or_create_category(self.guild, "👑 MASTER'S PRIVATE CHAMBERS", is_private=True, target=master_member)
         }
 
-        # Channels
+        # Channel Creation
+        # Citadel
         await get_or_create_channel(self.guild, "announcements", category=cats['citadel'])
         await get_or_create_channel(self.guild, "general-chat", category=cats['citadel'])
         await get_or_create_channel(self.guild, "art-gallery", category=cats['citadel'])
         await get_or_create_channel(self.guild, "bot-commands", category=cats['citadel'])
         await get_or_create_channel(self.guild, "The Town Square", category=cats['citadel'], type=discord.ChannelType.voice)
+
+        # Market
         await get_or_create_channel(self.guild, "job-board", category=cats['market'])
         await get_or_create_channel(self.guild, "the-bazaar", category=cats['market'])
         await get_or_create_channel(self.guild, "the-auction-house", category=cats['market'])
         await get_or_create_channel(self.guild, "bank-of-vardhan", category=cats['market'])
 
+        # Homes
         for p in self.persona_manager.get_all_personas():
             await get_or_create_channel(self.guild, f"{p.name.lower().replace(' ', '-')}-s-quarters", category=cats['homes'])
         await get_or_create_channel(self.guild, "Living Quarters", category=cats['homes'], type=discord.ChannelType.voice)
 
+        # Velvet District
         await get_or_create_channel(self.guild, "the-scarlet-lounge", category=cats['velvet'], nsfw=True)
         await get_or_create_channel(self.guild, "nsfw-art-gallery", category=cats['velvet'], nsfw=True)
         await get_or_create_channel(self.guild, "The Whispering Suite", category=cats['velvet'], type=discord.ChannelType.voice)
-        for i in range(1, 4):
+        for i in range(1, 6): # Create 5 private rooms
             await get_or_create_channel(self.guild, f"Private Room {i}", category=cats['velvet'], type=discord.ChannelType.voice)
 
+        # Arena & Courthouse
         await get_or_create_channel(self.guild, "the-coliseum", category=cats['arena'])
         await get_or_create_channel(self.guild, "court-proceedings", category=cats['court'])
 
+        # Master's Chambers
         control_channel = await get_or_create_channel(self.guild, "emotion-control", category=cats['master'])
         await get_or_create_channel(self.guild, "masters-journal", category=cats['master'])
         await get_or_create_channel(self.guild, "event-control", category=cats['master'])
 
+        # This is a critical step: update the live config with the new channel IDs
+        self.config.control_channel_id = control_channel.id
+
         print("World Architect has finished building the city.")
-        await control_channel.send(f"Welcome, Master. Your world is ready.")
+        await control_channel.send(f"Welcome, Master. Your city is built. The world will now come to life.")
+
+        # Now that channels exist, start the main loops
+        self.simulation_manager.run_offline_simulation()
+        self.loop.create_task(self.scheduler.start())
+        self.loop.create_task(self.event_ai.start())

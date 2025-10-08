@@ -4,7 +4,7 @@ from pathlib import Path
 
 def get_input(prompt, is_secret=False):
     """Gets user input with a clear prompt."""
-    # This is a placeholder for a more secure input method if needed
+    # In a real GUI, this could be a password field.
     return input(f"> {prompt}: ")
 
 def create_env_file():
@@ -25,25 +25,19 @@ def create_env_file():
     # Pinecone API
     print("\nNext, let's set up the cloud memory (Pinecone).")
     print("Please go to https://pinecone.io, sign up for a free 'Starter' account,")
-    print("create a new index with dimension 768 and metric 'cosine', then find your API keys.")
+    print("create a new index with dimension 384 and metric 'cosine', then find your API keys.")
     pinecone_key = get_input("Enter your Pinecone API Key")
     pinecone_host = get_input("Enter your Pinecone Index Host (e.g., your-index-name-12345.svc.gcp-starter.pinecone.io)")
 
-    env_content = f"""
-# Discord Secrets
+    env_content = f"""# Discord Secrets
 DISCORD_BOT_TOKEN={token}
 DISCORD_GUILD_ID={guild_id}
 USER_ID={user_id}
 
-# These will be populated by the bot on its first run
-DISCORD_EVENT_CHANNEL_ID=
-DISCORD_CONTROL_CHANNEL_ID=
-DISCORD_AUCTION_CHANNEL_ID=
-
-# Paths to local AI engines
+# Full path to the ComfyUI installation directory
 COMFYUI_PATH={comfyui_path}
 
-# API URLs for running servers
+# API URLs for running servers (defaults are usually correct)
 OLLAMA_API_URL=http://127.0.0.1:11434
 COMFYUI_API_URL=http://127.0.0.1:8188
 
@@ -67,6 +61,7 @@ def create_kink_file():
 
     for char in characters:
         kinks_str = get_input(f"Enter kinks for {char}")
+        # Sanitize by replacing spaces with underscores in each kink
         kinks_list = [k.strip().replace(" ", "_") for k in kinks_str.split(',')]
         kink_data[char] = kinks_list
 

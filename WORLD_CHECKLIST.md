@@ -15,31 +15,27 @@ This document tracks the systematic implementation of every feature for the fina
 
 ## Phase 2: Personas & Core Identity
 
-- [ ] **Canon-Driven Personas:**
-    - [ ] All 11 character personalities, backstories, and relationships are based on the 'Echoes of Bharat' saga.
-- [ ] **Voice Casting:**
-    - [ ] The system uses the `chatterbox` library to clone voices from `.wav` files provided by the user.
-    - [ ] The final voice cast (Akeno for Eka, Marulk for Dvi, etc.) is documented for the user to create the files.
-- [ ] **Interactive Kink Setup:**
-    - [ ] The setup script interactively prompts the Master to define the kinks for all 11 characters.
-    - [ ] Kink data is saved to a secure `character_kinks.json` file.
+- [x] **Canon-Driven Personas:**
+    - [x] All 11 character personalities, backstories, and relationships are based on the 'Echoes of Bharat' saga.
+- [x] **Voice Casting:**
+    - [x] The system uses the `chatterbox` library to clone voices from `.wav` files provided by the user.
+    - [x] The final voice cast (Akeno for Eka, Marulk for Dvi, etc.) is documented for the user to create the files.
+- [x] **Interactive Kink Setup:**
+    - [x] The setup script interactively prompts the Master to define the kinks for all 11 characters.
+    - [x] Kink data is saved to a secure `character_kinks.json` file.
 
 ## Phase 3: World & Immersion Systems
 
-- [ ] **World Architect Mode:**
-    - [ ] On its first run in a blank server, the bot automatically builds the complete Discord server structure, including all categories, channels, and roles.
-- [ ] **Codename 'The Simulation' (Offline Progression):**
-    - [ ] At startup, the system calculates the time the bot was offline.
-    - [ ] It then simulates economic and social activities that occurred during the downtime.
-- [ ] **Event AI (Dynamic World Events):**
-    - [ ] An invisible "Director" bot autonomously generates server-wide events.
-    - [ ] The Master can manually trigger events via a command in the `#event-control` channel.
-- [ ] **Character Schedules & Autonomous Life:**
-    - [ ] Each bot has a daily schedule they follow.
-    - [ ] Bots autonomously interact, form relationships, and create their own storylines.
-- [ ] **NSFW Regeneration System:**
-    - [ ] A dynamic injury and regeneration system is in place.
-    - [ ] Injuries (from wounds to decapitation) persist for the duration of an NSFW scene and only begin to heal after it concludes.
+- [x] **World Architect Mode:**
+    - [x] The bot automatically builds the complete Discord server structure on its first run.
+- [x] **Codename 'The Simulation' (Offline Progression):**
+    - [x] The system simulates world events that occurred while the PC was off.
+- [x] **Event AI (Dynamic World Events):**
+    - [x] An invisible "Director" bot generates server-wide events, and the Master can trigger them manually.
+- [x] **Character Schedules & Autonomous Life:**
+    - [x] Each bot has a daily schedule and will autonomously interact, form relationships, and create their own storylines.
+- [x] **NSFW Regeneration System:**
+    - [x] A dynamic injury system is in place where wounds persist for the duration of an NSFW scene before healing.
 
 ## Phase 4: The Living Economy
 
