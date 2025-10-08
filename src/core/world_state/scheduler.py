@@ -1,77 +1,86 @@
 import asyncio
-import datetime
-import random
+import logging
+from datetime import datetime, time
 
 class Scheduler:
     """
-    Manages the daily schedules and autonomous actions of all bots.
+    Manages the daily schedules and autonomous actions of the bots.
+    This creates the illusion of a persistent, 24/7 world.
     """
     def __init__(self, bot):
         self.bot = bot
-        self.schedules = {}
-        self._load_schedules()
-        self.task = None
+        self.logger = logging.getLogger(__name__)
+        self._task = None
 
-    def _load_schedules(self):
+    def start(self):
+        """Starts the main scheduling loop."""
+        if self._task is None:
+            self._task = asyncio.create_task(self._run_scheduler())
+            self.logger.info("Scheduler started.")
+
+    def stop(self):
+        """Stops the main scheduling loop."""
+        if self._task:
+            self._task.cancel()
+            self._task = None
+            self.logger.info("Scheduler stopped.")
+
+    async def _run_scheduler(self):
+        """The main loop that checks schedules every minute."""
+        await self.bot.wait_until_ready()
+        self.logger.info("Scheduler loop is now running.")
+        while not self.bot.is_closed():
+            try:
+                now = datetime.now().time()
+
+                for persona in self.bot.persona_manager.personas.values():
+                    await self.check_and_trigger_action(persona, now)
+
+            except Exception as e:
+                self.logger.error(f"Error in scheduler loop: {e}")
+
+            await asyncio.sleep(60) # Check every minute
+
+    async def check_and_trigger_action(self, persona, current_time):
         """
-        Loads the daily schedule for each character.
-        Schedules are dictionaries mapping an hour (0-23) to an activity.
+        Checks a persona's schedule and triggers actions if the time matches.
         """
-        for persona in self.bot.persona_manager.get_all_personas():
-            # Example simple schedule: work during the day, free at night
-            schedule = {
-                0: "Sleeping", 1: "Sleeping", 2: "Sleeping", 3: "Sleeping", 4: "Sleeping", 5: "Sleeping", 6: "Waking up",
-                7: "Breakfast", 8: "Working", 9: "Working", 10: "Working", 11: "Working",
-                12: "Lunch Break", 13: "Working", 14: "Working", 15: "Working", 16: "Working",
-                17: "Finishing Work", 18: "Free Time", 19: "Free Time", 20: "Free Time",
-                21: "Free Time", 22: "Winding Down", 23: "Sleeping"
-            }
-            self.schedules[persona.name] = schedule
+        for event, event_time_str in persona.schedule.items():
+            event_time = datetime.strptime(event_time_str, '%H:%M').time()
 
-    async def start(self):
-        """Starts the main scheduler loop."""
-        print("[Scheduler] The world's clock is now ticking.")
-        self.task = asyncio.create_task(self._main_loop())
+            # Check if the current time is within a minute of the scheduled event time
+            if event_time.hour == current_time.hour and event_time.minute == current_time.minute:
+                self.logger.info(f"Triggering '{event}' for {persona.name} at {current_time}.")
+                await self.handle_scheduled_event(persona, event)
 
-    async def _main_loop(self):
-        """The main loop that triggers autonomous actions based on the schedule."""
-        while True:
-            await self._trigger_hourly_actions()
-            # Wait until the next hour, with some randomness to prevent perfect sync
-            now = datetime.datetime.now()
-            next_hour = (now + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-            wait_seconds = (next_hour - now).total_seconds()
-            await asyncio.sleep(wait_seconds + random.randint(1, 120)) # Jitter of up to 2 mins
+    async def handle_scheduled_event(self, persona, event_name: str):
+        """
+        Handles the logic for a specific scheduled event.
+        This is where you would define what "work" or "sleep" means.
+        """
+        # Example: Announce the action in a general channel
+        channel = discord.utils.get(self.bot.get_all_channels(), name='general-chat')
+        if not channel:
+            self.logger.warning("Could not find 'general-chat' to announce schedule event.")
+            return
 
-    async def _trigger_hourly_actions(self):
-        """Triggers actions for all bots based on their current scheduled activity."""
-        current_hour = datetime.datetime.now().hour
-        print(f"--- Scheduler Tick: Hour {current_hour} ---")
+        message = ""
+        if event_name == "wake_up":
+            message = f"{persona.name} is waking up and starting their day."
+            # Here you could modify emotional state, e.g., reset sleepiness
+        elif event_name == "go_to_work":
+            message = f"{persona.name} is now heading to work."
+            # Trigger economic activity
+            await self.bot.economy_manager.perform_work(persona)
+        elif event_name == "free_time":
+            message = f"{persona.name} is now enjoying some free time."
+            # Could trigger autonomous interactions, art generation, etc.
+        elif event_name == "go_to_sleep":
+            message = f"{persona.name} is heading to bed for the night."
+            # Modify emotional state for rest
 
-        for persona in self.bot.persona_manager.get_all_personas():
-            # Check regeneration status first
-            persona.check_regeneration()
-
-            if persona.status != "Healthy":
-                print(f"[Scheduler] Skipping actions for {persona.name} (Status: {persona.status})")
-                continue
-
-            # Check for high-priority emotional states
-            if persona.emotions['loneliness'] > 85:
-                await self.bot.trigger_proactive_dm(persona)
-                persona.emotions['loneliness'] = 20 # Reset after acting
-
-            if persona.emotions['lust'] > 75:
-                await self.bot.trigger_non_con_check(persona)
-
-            activity = self.schedules.get(persona.name, {}).get(current_hour, "Idle")
-
-            if activity == "Working" and persona.servitude_owner is None:
-                job = self.bot.job_manager.get_character_job(persona.name)
-                if job:
-                    earnings = self.bot.job_manager.perform_work(persona.name, 1) # 1 hour of work
-                    if earnings > 0:
-                        self.bot.economy_manager.adjust_balance(persona.name, earnings, f"1 hour of work as a {job.name}")
-
-            # Trigger a general autonomous action based on their schedule
-            await self.bot.trigger_autonomous_action(persona, activity)
+        if message:
+            try:
+                await channel.send(message)
+            except Exception as e:
+                self.logger.error(f"Failed to send schedule message for {persona.name}: {e}")

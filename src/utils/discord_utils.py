@@ -1,47 +1,45 @@
 import discord
+import logging
 
-async def get_or_create_category(guild, name, is_private=False, target=None):
-    """Gets a category by name, or creates it if it doesn't exist."""
-    category = discord.utils.get(guild.categories, name=name)
-    if not category:
-        overwrites = {}
-        if is_private and target:
-            # Private to the target user (Master) and the bot
-            overwrites[guild.default_role] = discord.PermissionOverwrite(read_messages=False)
-            overwrites[target] = discord.PermissionOverwrite(read_messages=True)
-            overwrites[guild.me] = discord.PermissionOverwrite(read_messages=True)
-        category = await guild.create_category(name, overwrites=overwrites)
-        print(f"Created category: {name}")
-    return category
+logger = logging.getLogger(__name__)
 
-async def get_or_create_channel(guild, name, category=None, nsfw=False, is_private=False, target=None, type=discord.ChannelType.text):
-    """Gets a channel by name, or creates it if it doesn't exist."""
-    # Check for existing channel within the category
-    if category:
-        channel = discord.utils.get(category.channels, name=name.lower().replace(" ", "-"))
-    else:
-        channel = discord.utils.get(guild.channels, name=name.lower().replace(" ", "-"))
+async def get_or_create_category(guild: discord.Guild, category_name: str, overwrites=None) -> discord.CategoryChannel:
+    """
+    Finds a category by name or creates it if it doesn't exist.
 
-    if not channel:
-        overwrites = {}
-        if is_private and target:
-            overwrites[guild.default_role] = discord.PermissionOverwrite(read_messages=False)
-            overwrites[target] = discord.PermissionOverwrite(read_messages=True)
-            overwrites[guild.me] = discord.PermissionOverwrite(read_messages=True)
+    Args:
+        guild: The discord.Guild to search in.
+        category_name: The name of the category to find or create.
+        overwrites: The permission overwrites for the category.
 
-        channel_name = name.lower().replace(" ", "-")
-        if type == discord.ChannelType.text:
-            channel = await guild.create_text_channel(channel_name, category=category, nsfw=nsfw, overwrites=overwrites)
-        elif type == discord.ChannelType.voice:
-            channel = await guild.create_voice_channel(channel_name, category=category, overwrites=overwrites)
-        print(f"Created channel: #{channel.name} in category '{category.name}'")
+    Returns:
+        The discord.CategoryChannel object.
+    """
+    for category in guild.categories:
+        if category.name.lower() == category_name.lower():
+            logger.info(f"Found existing category: {category_name}")
+            return category
 
-    return channel
+    logger.info(f"Creating new category: {category_name}")
+    return await guild.create_category(category_name, overwrites=overwrites)
 
-async def get_or_create_role(guild, name, color=discord.Color.default()):
-    """Gets a role by name, or creates it if it doesn't exist."""
-    role = discord.utils.get(guild.roles, name=name)
-    if not role:
-        role = await guild.create_role(name=name, color=color)
-        print(f"Created role: {name}")
-    return role
+async def get_or_create_channel(guild: discord.Guild, channel_name: str, category: discord.CategoryChannel, nsfw=False) -> discord.TextChannel:
+    """
+    Finds a text channel by name within a category or creates it if it doesn't exist.
+
+    Args:
+        guild: The discord.Guild to search in.
+        channel_name: The name of the channel to find or create.
+        category: The discord.CategoryChannel to place the channel in.
+        nsfw: Whether the channel should be marked as NSFW.
+
+    Returns:
+        The discord.TextChannel object.
+    """
+    for channel in category.text_channels:
+        if channel.name.lower() == channel_name.lower():
+            logger.info(f"Found existing channel: {channel_name} in {category.name}")
+            return channel
+
+    logger.info(f"Creating new channel: #{channel_name} in {category.name}")
+    return await guild.create_text_channel(channel_name, category=category, nsfw=nsfw)

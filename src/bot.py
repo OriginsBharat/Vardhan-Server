@@ -1,167 +1,106 @@
+import os
 import discord
-import asyncio
-from pathlib import Path
+from discord.ext import commands
+from config import Config
+from core.ai_services.ollama_client import OllamaClient
+from core.ai_services.comfyui_client import ComfyUIClient
+from core.ai_services.chatterbox_client import ChatterboxClient
+from core.personas import PersonaManager
+from core.universe import Universe
+from core.economic_system.economy_manager import EconomyManager
+from core.world_state.scheduler import Scheduler
+from utils.discord_utils import get_or_create_category, get_or_create_channel
 
-from src.config import Config
-from src.core.personas import PersonaManager
-from src.core.universe import Universe
-from src.core.economic_system.economy_manager import EconomyManager
-from src.core.economic_system.job_manager import JobManager
-from src.core.economic_system.shop import ShopManager
-from src.core.economic_system.auction_house import AuctionHouse
-from src.core.world_state.scheduler import Scheduler
-from src.core.world_state.simulation import SimulationManager
-from src.core.world_state.event_ai import EventAI
-from src.core.ai_services.ollama_client import OllamaClient
-from src.core.ai_services.comfyui_client import ComfyUIClient
-from src.core.ai_services.chatterbox_client import ChatterboxClient
-from src.commands.control_panel import ControlPanel
-from src.utils.discord_utils import get_or_create_category, get_or_create_channel
+class MasterBot(commands.Bot):
+    """
+    The main bot class that orchestrates the entire AI World.
+    """
+    def __init__(self, config: Config, ollama_client: OllamaClient, comfyui_client: ComfyUIClient, chatterbox_client: ChatterboxClient):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        intents.members = True
+        super().__init__(command_prefix="!", intents=intents)
 
-class MasterBot(discord.Client):
-    """The main bot class that orchestrates the entire AI world."""
-    def __init__(self, config, intents):
-        super().__init__(intents=intents)
         self.config = config
+        self.ollama_client = ollama_client
+        self.comfyui_client = comfyui_client
+        self.chatterbox_client = chatterbox_client
 
-        # Core Systems
-        self.persona_manager = PersonaManager()
-        self.universe = Universe(api_key=config.pinecone_api_key, index_host=config.pinecone_index_host)
+        self.persona_manager = PersonaManager(self)
+        self.universe = Universe(config)
         self.economy_manager = EconomyManager()
-        self.job_manager = JobManager(self.persona_manager)
-        self.shop_manager = ShopManager()
-        self.auction_house = AuctionHouse()
         self.scheduler = Scheduler(self)
-        self.simulation_manager = SimulationManager(self)
-        self.event_ai = EventAI(self)
 
-        # AI Service Clients
-        self.llm = OllamaClient(api_url=config.ollama_api_url)
-        self.art_generator = ComfyUIClient(server_address=config.comfyui_api_url)
-        self.voice_generator = ChatterboxClient()
+    async def setup_hook(self):
+        """Asynchronous setup hook for the bot."""
+        print("Loading extensions...")
+        # Load command cogs
+        for filename in os.listdir('./src/commands'):
+            if filename.endswith('.py') and not filename.startswith('__'):
+                await self.load_extension(f'commands.{filename[:-3]}')
+                print(f"Loaded command: {filename}")
 
-        # Command Handlers
-        self.control_panel = ControlPanel(self)
-
-        # State for Puppet Master feature
-        self.master_possessing = False
-        self.possessed_character_name = None
-        self.channel_cache = {}
+        # Initialize core systems
+        await self.persona_manager.initialize_personas()
+        self.scheduler.start()
+        print("Core systems initialized.")
 
     async def on_ready(self):
+        """Called when the bot is ready and connected to Discord."""
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
-        self.guild = self.get_guild(self.config.guild_id)
-        if not self.guild:
-            print(f"[FATAL] Guild with ID {self.config.guild_id} not found. The bot cannot operate.")
-            await self.close()
-            return
+        # Set bot presence
+        await self.change_presence(activity=discord.Game(name="Watching over my world..."))
 
-        await self.world_architect()
-        # self.simulation_manager.run_offline_simulation() # Will be called after channel IDs are set
-        # self.loop.create_task(self.scheduler.start())
-        # self.loop.create_task(self.event_ai.start())
+        # Check if the server needs to be built
+        guild = self.get_guild(self.config.discord_guild_id)
+        if guild and len(guild.channels) < 5: # Heuristic for a "blank" server
+            print("Server appears to be blank. Initiating World Architect mode...")
+            await self.build_server_structure(guild)
 
-    async def on_message(self, message):
-        if message.author == self.user:
-            return
+    async def build_server_structure(self, guild: discord.Guild):
+        """
+        Automatically builds the categories and channels for the server.
+        """
+        print("Building server structure...")
 
-        # Handle Master's possession first
-        if self.master_possessing and str(message.author.id) == self.config.user_id:
-            if self.possessed_character_name:
-                await self.send_as_possessed(message)
-            return
+        # Clear existing channels (optional, for a truly clean slate)
+        for channel in guild.channels:
+            await channel.delete()
 
-        # Handle Master's commands in the control channel
-        if self.config.control_channel_id and message.channel.id == self.config.control_channel_id and str(message.author.id) == self.config.user_id:
-            if message.content.startswith('!'):
-                await self.control_panel.handle_command(message)
-                return
+        # --- The Citadel (Admin & Control) ---
+        citadel_category = await get_or_create_category(guild, "🏰 The Citadel")
+        await get_or_create_channel(guild, "announcements", category=citadel_category)
+        await get_or_create_channel(guild, "rules-and-lore", category=citadel_category)
 
-    async def send_as_possessed(self, message):
-        """Sends a message on behalf of the possessed character."""
-        target_channel = self.get_channel(message.channel.id)
-        if not target_channel:
-            return
+        # --- Master's Chambers (Private) ---
+        master_role = await guild.create_role(name="Master")
+        member = await guild.fetch_member(self.config.user_id)
+        if member:
+            await member.add_roles(master_role)
 
-        persona = self.persona_manager.get_persona(self.possessed_character_name)
-        if not persona:
-            return
-
-        # Create a webhook to impersonate the bot
-        webhook = await target_channel.create_webhook(name=persona.name)
-
-        # In a multi-bot setup, you'd fetch the bot's real avatar. Here we can't.
-        await webhook.send(content=message.content, username=persona.name)
-        await webhook.delete()
-        await message.delete()
-
-    async def world_architect(self):
-        """Builds the entire Discord server structure if it doesn't exist."""
-        if discord.utils.get(self.guild.categories, name="🏰 THE CITADEL"):
-            print("Server structure already exists. Skipping World Architect.")
-            return
-
-        print("First run detected. Building the Discord city of Vardhan...")
-        master_member = self.guild.get_member(self.config.user_id)
-        if not master_member:
-            print("[FATAL] Master user not found in the guild. Cannot create private channels.")
-            return
-
-        # Category Creation
-        cats = {
-            "citadel": await get_or_create_category(self.guild, "🏰 THE CITADEL"),
-            "market": await get_or_create_category(self.guild, "💰 THE MARKET DISTRICT"),
-            "homes": await get_or_create_category(self.guild, "🏡 CHARACTER HOMES"),
-            "velvet": await get_or_create_category(self.guild, "💋 THE VELVET DISTRICT"),
-            "arena": await get_or_create_category(self.guild, "⚔️ THE ARENA OF SOULS"),
-            "court": await get_or_create_category(self.guild, "⚖️ THE COURTHOUSE"),
-            "master": await get_or_create_category(self.guild, "👑 MASTER'S PRIVATE CHAMBERS", is_private=True, target=master_member)
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            master_role: discord.PermissionOverwrite(read_messages=True)
         }
+        master_category = await get_or_create_category(guild, "🔒 Master's Chambers", overwrites=overwrites)
+        await get_or_create_channel(guild, "master-control", category=master_category)
 
-        # Channel Creation
-        # Citadel
-        await get_or_create_channel(self.guild, "announcements", category=cats['citadel'])
-        await get_or_create_channel(self.guild, "general-chat", category=cats['citadel'])
-        await get_or_create_channel(self.guild, "art-gallery", category=cats['citadel'])
-        await get_or_create_channel(self.guild, "bot-commands", category=cats['citadel'])
-        await get_or_create_channel(self.guild, "The Town Square", category=cats['citadel'], type=discord.ChannelType.voice)
+        # --- The Market District (Economy) ---
+        market_category = await get_or_create_category(guild, "💰 The Market District")
+        await get_or_create_channel(guild, "job-board", category=market_category)
+        await get_or_create_channel(guild, "the-bazaar", category=market_category) # For bot shops
+        await get_or_create_channel(guild, "auction-house", category=market_category)
 
-        # Market
-        await get_or_create_channel(self.guild, "job-board", category=cats['market'])
-        await get_or_create_channel(self.guild, "the-bazaar", category=cats['market'])
-        await get_or_create_channel(self.guild, "the-auction-house", category=cats['market'])
-        await get_or_create_channel(self.guild, "bank-of-vardhan", category=cats['market'])
+        # --- The Velvet District (NSFW) ---
+        velvet_category = await get_or_create_category(guild, "🔞 The Velvet District")
+        await get_or_create_channel(guild, "the-boudoir", category=velvet_category, nsfw=True)
+        await get_or_create_channel(guild, "erotica-lounge", category=velvet_category, nsfw=True)
 
-        # Homes
-        for p in self.persona_manager.get_all_personas():
-            await get_or_create_channel(self.guild, f"{p.name.lower().replace(' ', '-')}-s-quarters", category=cats['homes'])
-        await get_or_create_channel(self.guild, "Living Quarters", category=cats['homes'], type=discord.ChannelType.voice)
+        # --- Public Square (General) ---
+        public_category = await get_or_create_category(guild, "🌳 Public Square")
+        await get_or_create_channel(guild, "general-chat", category=public_category)
+        await get_or_create_channel(guild, "art-gallery", category=public_category)
 
-        # Velvet District
-        await get_or_create_channel(self.guild, "the-scarlet-lounge", category=cats['velvet'], nsfw=True)
-        await get_or_create_channel(self.guild, "nsfw-art-gallery", category=cats['velvet'], nsfw=True)
-        await get_or_create_channel(self.guild, "The Whispering Suite", category=cats['velvet'], type=discord.ChannelType.voice)
-        for i in range(1, 6): # Create 5 private rooms
-            await get_or_create_channel(self.guild, f"Private Room {i}", category=cats['velvet'], type=discord.ChannelType.voice)
-
-        # Arena & Courthouse
-        await get_or_create_channel(self.guild, "the-coliseum", category=cats['arena'])
-        await get_or_create_channel(self.guild, "court-proceedings", category=cats['court'])
-
-        # Master's Chambers
-        control_channel = await get_or_create_channel(self.guild, "emotion-control", category=cats['master'])
-        await get_or_create_channel(self.guild, "masters-journal", category=cats['master'])
-        await get_or_create_channel(self.guild, "event-control", category=cats['master'])
-
-        # This is a critical step: update the live config with the new channel IDs
-        self.config.control_channel_id = control_channel.id
-
-        print("World Architect has finished building the city.")
-        await control_channel.send(f"Welcome, Master. Your city is built. The world will now come to life.")
-
-        # Now that channels exist, start the main loops
-        self.simulation_manager.run_offline_simulation()
-        self.loop.create_task(self.scheduler.start())
-        self.loop.create_task(self.event_ai.start())
+        print("✅ Server structure built successfully.")

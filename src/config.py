@@ -1,50 +1,36 @@
 import os
-from dotenv import load_dotenv
 
 class Config:
-    """Loads and holds all configuration variables for the application."""
+    """
+    Handles loading and providing configuration variables from the environment.
+    """
     def __init__(self):
-        # Load environment variables from a .env file
-        load_dotenv()
-
-        # Discord Secrets (must be provided)
+        # Discord Credentials
         self.discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
-        self.guild_id = int(os.getenv("DISCORD_GUILD_ID", 0))
-        self.user_id = int(os.getenv("USER_ID", 0))
+        self.discord_guild_id = int(os.getenv("DISCORD_GUILD_ID"))
+        self.user_id = int(os.getenv("USER_ID"))
 
-        # Critical Paths (must be provided)
+        # AI Service URLs
+        self.ollama_api_url = os.getenv("OLLAMA_API_URL")
+        self.comfyui_api_url = os.getenv("COMFYUI_API_URL")
+        self.chatterbox_url = os.getenv("CHATTERBOX_URL")
+        self.llm_model = os.getenv("LLM_MODEL")
+
+        # Pinecone (Universe Memory)
+        self.pinecone_api_key = os.getenv("PINECODE_API_KEY")
+        self.pinecone_host = os.getenv("PINECODE_HOST")
+
+        # Paths
         self.comfyui_path = os.getenv("COMFYUI_PATH")
-
-        # Pinecone Cloud Memory (must be provided)
-        self.pinecone_api_key = os.getenv("PINECONE_API_KEY")
-        self.pinecone_index_host = os.getenv("PINECONE_INDEX_HOST")
-
-        # AI Service URLs (sensible defaults)
-        self.ollama_api_url = os.getenv("OLLAMA_API_URL", "http://127.0.0.1:11434")
-        self.comfyui_api_url = os.getenv("COMFYUI_API_URL", "http://127.0.0.1:8188")
-
-        # Channel IDs (will be found at runtime by the bot)
-        self.event_channel_id = None
-        self.control_channel_id = None
-        self.auction_channel_id = None
-        self.courthouse_channel_id = None
-        self.bank_channel_id = None
 
         self._validate()
 
     def _validate(self):
-        """Ensures all critical configuration variables are present."""
+        """Ensure all critical configuration variables are present."""
         critical_vars = [
-            "discord_bot_token",
-            "guild_id",
-            "user_id",
-            "comfyui_path",
-            "pinecone_api_key",
-            "pinecone_index_host",
+            "discord_bot_token", "discord_guild_id", "user_id",
+            "pinecone_api_key", "pinecone_host", "comfyui_path"
         ]
-        missing_vars = [var for var in critical_vars if not getattr(self, var)]
-        if missing_vars:
-            raise ValueError(f"Missing critical configuration variables: {', '.join(missing_vars)}")
-
-        if self.guild_id == 0 or self.user_id == 0:
-            raise ValueError("DISCORD_GUILD_ID and USER_ID must be valid integers.")
+        for var in critical_vars:
+            if not getattr(self, var):
+                raise ValueError(f"Missing critical environment variable: {var.upper()}")

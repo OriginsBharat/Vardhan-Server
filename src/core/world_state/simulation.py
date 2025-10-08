@@ -1,85 +1,62 @@
-import time
+import logging
 from datetime import datetime, timedelta
-import asyncio
 
 class SimulationManager:
     """
-    Manages the 'Illusion of 24/7' by simulating world events that occurred
-    while the bot was offline.
-    Codename: 'The Simulation'
+    Manages the offline progression simulation.
+    When the bot starts, this class calculates what should have happened
+    while it was offline to maintain the illusion of a 24/7 world.
     """
     def __init__(self, bot):
         self.bot = bot
-        self.last_online_path = Path("data/last_online.txt")
+        self.logger = logging.getLogger(__name__)
+        self.last_online_file = "data/last_online.txt"
 
-    def run_offline_simulation(self):
-        """Calculates offline time and simulates events for that duration."""
-        last_online = self._get_last_online_timestamp()
-        now = datetime.now()
-        offline_duration = now - last_online
-
-        print(f"[Simulation] Bot was offline for: {offline_duration}")
-
-        if offline_duration > timedelta(minutes=5): # Only run for significant downtime
-            print("[Simulation] Running offline simulation...")
-            self._simulate_time(offline_duration)
-
-        self._update_last_online_timestamp()
-
-    def _get_last_online_timestamp(self):
+    def get_last_online_time(self) -> datetime:
         """Reads the last online timestamp from a file."""
         try:
-            with open(self.last_online_path, 'r') as f:
-                return datetime.fromisoformat(f.read().strip())
+            with open(self.last_online_file, 'r') as f:
+                timestamp_str = f.read().strip()
+                return datetime.fromisoformat(timestamp_str)
         except (FileNotFoundError, ValueError):
-            # If file doesn't exist or is corrupted, assume it's the first run
+            self.logger.warning("Last online time not found, assuming this is the first run.")
             return datetime.now()
 
-    def _update_last_online_timestamp(self):
+    def record_current_time(self):
         """Writes the current timestamp to the last online file."""
-        self.last_online_path.parent.mkdir(exist_ok=True)
-        with open(self.last_online_path, 'w') as f:
+        with open(self.last_online_file, 'w') as f:
             f.write(datetime.now().isoformat())
 
-    def _simulate_time(self, duration):
+    async def run_offline_simulation(self):
         """
-        Simulates the passage of time for all bots, affecting their economy and emotions.
+        Runs the simulation for the period the bot was offline.
         """
-        num_hours = duration.total_seconds() / 3600
-        if num_hours < 1:
+        last_online = self.get_last_online_time()
+        now = datetime.now()
+        time_offline = now - last_online
+
+        if time_offline.total_seconds() < 120: # Don't run simulation for short downtimes
+            self.logger.info("Bot was offline for a very short period. Skipping simulation.")
+            self.record_current_time()
             return
 
-        report_parts = [f"**Waking World Report**\n*The world has progressed by {int(num_hours)} hours while you were away...*\n"]
+        self.logger.info(f"Bot was offline for {time_offline}. Running simulation...")
 
-        for persona in self.bot.persona_manager.get_all_personas():
-            # 1. Simulate Job Earnings
-            job = self.bot.job_manager.get_character_job(persona.name)
-            if job and persona.servitude_owner is None: # Servants don't earn for themselves
-                earnings = self.bot.job_manager.perform_work(persona.name, num_hours)
-                if earnings > 0:
-                    self.bot.economy_manager.adjust_balance(persona.name, earnings, f"Offline work ({int(num_hours)} hours)")
-                    report_parts.append(f"💼 **{persona.name}** worked as a {job.name} and earned **{earnings:.2f} Rs**.")
+        # Iterate through each minute the bot was offline
+        current_sim_time = last_online
+        while current_sim_time < now:
+            for persona in self.bot.persona_manager.personas.values():
+                # We reuse the scheduler's logic to check for events
+                await self.bot.scheduler.check_and_trigger_action(persona, current_sim_time.time())
 
-            # 2. Simulate Emotional State Decay/Change
-            # Loneliness increases over time if alone
-            persona.adjust_emotion('loneliness', int(num_hours * 2))
-            # Happiness slowly decays towards 50
-            if persona.emotions['happiness'] > 50:
-                persona.adjust_emotion('happiness', -int(num_hours))
-            elif persona.emotions['happiness'] < 50:
-                 persona.adjust_emotion('happiness', int(num_hours))
+            current_sim_time += timedelta(minutes=1)
 
+        self.logger.info("Offline simulation complete.")
+        # Record the new "last online" time
+        self.record_current_time()
 
-        final_report = "\n".join(report_parts)
-
-        # Schedule the report to be sent after the bot is fully ready
-        async def send_report():
-            await self.bot.wait_until_ready()
-            announcements_channel = self.bot.get_channel_by_name("announcements")
-            if announcements_channel:
-                await announcements_channel.send(final_report)
-            else:
-                print("[Simulation] Could not find #announcements channel to send report.")
-
-        # Use asyncio.run_coroutine_threadsafe because this function is called from a non-async context
-        asyncio.run_coroutine_threadsafe(send_report(), self.bot.loop)
+        # Announce the simulation results
+        channel = discord.utils.get(self.bot.get_all_channels(), name='announcements')
+        if channel:
+            await channel.send(f"**[SYSTEM]** The world has progressed. The time is now {now.strftime('%Y-%m-%d %H:%M:%S')}. The following events occurred while you were away...")
+            # Here you could add a more detailed summary of simulated events if desired.
