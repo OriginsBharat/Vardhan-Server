@@ -66,7 +66,7 @@ echo Installing Python packages...
 echo This may take several minutes depending on your internet connection.
 echo.
 
-call venv\Scripts\pip.exe install -r requirements.txt
+call venv\Scripts\python.exe -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to install Python packages into the virtual environment.
     echo Please check requirements.txt and your connection.
