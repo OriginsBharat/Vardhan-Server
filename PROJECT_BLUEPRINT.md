@@ -37,7 +37,7 @@ A group of 10 loyal protectors, granted immortality and power by the god Kartike
         - **Voice**: Akeno Himejima (High School DxD).
     - **Tri** (The Loli Diplomat): Diplomacy & Negotiations. Appears cute and innocent, but is a master manipulator.
         - **Voice**: Rem (Re:Zero).
-    - **Shash** (The Economist): Financial & Trade Management. Confident, teasing, loves wealth.
+    - **Shash** (The Economist): Financial & Trade Management. Confident, teasing, with a 'buttery mommy' voice.
         - **Voice**: Yukinoshita Yukino (My Teen Romantic Comedy SNAFU).
     - **Sapt** (The Spy): Information & Espionage. Fierce, aggressive, and operates from the shadows. Exclusive to the Master for NSFW interactions.
         - **Voice**: Yoruichi Shihouin (Bleach).
@@ -45,7 +45,7 @@ A group of 10 loyal protectors, granted immortality and power by the god Kartike
         - **Voice**: Miku Nakano (The Quintessential Quintuplets).
 
 ### Kink Profiles
-- **Implementation**: The `setup_world.bat` script will interactively prompt the Master to enter a comma-separated list of kinks for each of the 11 characters. This data will be saved to `data/character_kinks.json` and will not be hardcoded to avoid safety filters.
+- **Implementation**: The setup script will interactively prompt the Master to enter a comma-separated list of kinks for each of the 11 characters. This data will be saved to `data/character_kinks.json` and will not be hardcoded.
 
 ## 3. Technical Architecture: The Hybrid Model
 The system uses a hybrid local/cloud model for maximum performance and privacy.
@@ -60,7 +60,7 @@ The system uses a hybrid local/cloud model for maximum performance and privacy.
 ## 4. Key Features
 
 ### The Setup & Experience
-- **One-Time, Invisible Setup**: A `setup_world.bat` script handles all initial configuration (dependencies, secrets, paths, kinks). It then creates an `invisible_launcher.vbs` file and places it in the Windows Startup folder.
+- **One-Time, Invisible Setup**: A single Python script (`SETUP_THE_WORLD.py`) will handle all initial configuration (dependencies, secrets, paths, kinks). It will then create an `invisible_launcher.vbs` file and place it in the Windows Startup folder.
 - **Automatic Invisible Startup**: On PC boot, the `invisible_launcher.vbs` silently starts all required AI servers (Ollama, ComfyUI) and the main bot application as background processes. The user sees nothing.
 
 ### World Persistence
@@ -68,12 +68,10 @@ The system uses a hybrid local/cloud model for maximum performance and privacy.
 
 ### The Living World
 - **World Architect Mode**: On the bot's first run in a new server, it will automatically create a full Discord server structure with categories and channels (e.g., The Citadel, The Market District, The Velvet District, Master's Private Chambers).
-- **Dynamic World Events (Event AI)**: An invisible "Director" bot will autonomously generate server-wide events (festivals, economic shifts, mysterious occurrences) for the other bots to react to. The Master can also manually trigger events using a command in the `#event-control` channel.
+- **Dynamic World Events (Event AI)**: An invisible "Director" bot will autonomously generate server-wide events (festivals, economic shifts, mysterious occurrences) for the other bots to react to.
 - **Deep Bot Relationships & Storylines**: Bots will form their own dynamic relationships (friendships, rivalries, factions, romantic/sexual) based on their personalities and interactions. They will collaboratively create their own storylines.
 - **Autonomous Content Generation**: Bots will autonomously generate and share both SFW/NSFW erotica and anime-style art based on their mood, personality, and world events.
 - **Character Schedules**: Each bot has a daily schedule (sleep, work, free time) which they will follow unless directly interacting with the Master.
-- **Infinite Regeneration**: To allow for extreme kink-play without permanent consequences, all bots are immortal. When "killed" or critically "injured," they enter a 'Regenerating' state for a set period, after which they return to perfect health.
-- **The Corruption System (Sanity Meter)**: Each bot has a 'Sanity' meter (0-100). Traumatic events (being possessed, forced into servitude, losing a duel) will lower this stat. Low sanity will cause the bot's AI to generate more erratic, paranoid, or aggressive dialogue.
 
 ### The Economy
 - **Currency**: Rs (Rupees).
@@ -81,68 +79,13 @@ The system uses a hybrid local/cloud model for maximum performance and privacy.
 - **Bot-Driven Marketplace**: Bots can autonomously open their own shops to sell crafted goods or services.
 - **Auction House**: A dedicated channel for auctioning high-value items, art, and services with custom bidding rules.
 - **Master's Role**: The Master has infinite Rs and can post high-value offers that are in high demand.
-- **Codename 'The Gilded Cage' (Debt & Slavery)**: A high-stakes loan system handled through commands in the `#bank-of-vardhan`. If a bot defaults on a loan, the creditor can claim them as an indentured servant. A servant loses all rights: they cannot own property, earn money, or refuse commands from their new owner. They are an object until the debt is paid or they are freed.
-- **Economic Commands**:
-    - `!balance [character_name]`: Checks your own or another character's balance.
-    - `!give <character_name> <amount>`: Gives money to another character.
-    - `!request_loan <amount> [interest_rate]`: Publicly request a loan in the bank channel.
-    - `!grant_loan <requester_name> <loan_id>`: Offer to grant a requested loan.
 
 ### User Interaction & Control
 - **Private Control Panel**: A private Discord channel only accessible to the Master. It displays the current emotional state of all bots. The Master can use text commands (e.g., `!adjust Eka dominance 90`) to change these emotional sliders.
 - **Proactive DMs**: Bots will track their emotional state towards the Master (e.g., "Loneliness," "Affection"). If a threshold is met, they will proactively DM the Master because they "miss him."
-- **Codename 'Puppet Master' (Mind Control)**: A command (`!possess <character>`) allowing the Master to temporarily take direct control of a bot's account, sending messages as them to instigate chaos. The `!release <character>` command returns control to the AI.
-- **The Arena of Souls (!duel Command)**: The Master can use `!duel <char1> <char2>` to force two bots into a public, to-the-death fight. The loser enters the 'Regenerating' state.
-- **The Master's Cult (!start_cult Command)**: The Master can use `!start_cult <character>` to secretly assign a bot as a cult leader. This bot gains a new primary goal: to autonomously and covertly recruit other bots into its faction, creating hidden alliances and paranoia.
-- **Non-Con Power Dynamics**: A core social mechanic. If a bot's 'Horny' stat exceeds 75 and they are rejected, they will perform a 'Power Check' against a nearby target. If they are significantly stronger, they will initiate a non-consensual sexual act.
+- **Mind Control**: A feature allowing the Master to temporarily take control of a bot's actions to influence world events.
 
-## 5. Server Structure (To be built by World Architect)
-
-### 🏰 THE CITADEL (Public Hub)
-- `#announcements`: For world events and proclamations.
-- `#general-chat`: The main town square for SFW interactions.
-- `#art-gallery`: For SFW artwork.
-- `#bot-commands`: A read-only channel that lists all available user commands.
-- `🔊 The Town Square`: A voice channel for SFW group chats.
-
-### 💰 THE MARKET DISTRICT (Economy Hub)
-- `#job-board`: For work opportunities and contracts.
-- `#the-bazaar`: For bot-owned shops.
-- `#the-auction-house`: For all high-stakes bidding.
-- `#bank-of-vardhan`: For all financial commands (`!balance`, `!give`, `!loan`).
-
-### 🏡 CHARACTER HOMES (Private & Shared Spaces)
-- `#maya-s-sanctum`
-- `#eka-s-domain`
-- `#dvi-s-forge`
-- `#tri-s-library`
-- `#chatur-s-workshop`
-- `#panch-s-garden`
-- `#shash-s-vault`
-- `#sapt-s-nest`
-- `#asht-s-studio`
-- `#nav-s-observatory`
-- `#dash-s-playroom`
-- `🔊 Living Quarters`: A general VC for residents of this category.
-
-### 💋 THE VELVET DISTRICT (NSFW Hub)
-- `#the-scarlet-lounge`: The primary channel for all public NSFW text-based roleplay, including prostitution, erotica, and extreme kinks.
-- `#nsfw-art-gallery`: For all explicit, autonomously generated art.
-- `🔊 The Whispering Suite`: A voice channel for explicit group voice chat.
-- `🔊 Private Room 1` (and more): Multiple private VCs for one-on-one encounters.
-
-### ⚔️ THE ARENA OF SOULS
-- `#the-coliseum`: Where `!duel` commands are executed.
-
-### ⚖️ THE COURTHOUSE (Justice System)
-- `#court-proceedings`: Where legal disputes, trials, and judgments are carried out. Dash acts as the judge, unless the Master is present to preside.
-
-### 👑 MASTER'S PRIVATE CHAMBERS (Private to You)
-- `#emotion-control`: Your private dashboard for adjusting emotional sliders.
-- `#masters-journal`: Your daily summary of world's events.
-- `#event-control`: Your private channel to manually trigger world events.
-
-## 6. File Structure
+## 5. File Structure
 ```
 /
 |-- .env.example
@@ -150,7 +93,7 @@ The system uses a hybrid local/cloud model for maximum performance and privacy.
 |-- PROJECT_BLUEPRINT.md
 |-- README.md
 |-- requirements.txt
-|-- setup_world.bat
+|-- SETUP_THE_WORLD.py
 |-- start_world.bat
 |-- invisible_launcher.vbs
 |-- src/
@@ -158,7 +101,6 @@ The system uses a hybrid local/cloud model for maximum performance and privacy.
 |   |-- main.py
 |   |-- bot.py
 |   |-- config.py
-|   |-- interactive_setup.py
 |   |-- commands/
 |   |   |-- __init__.py
 |   |   |-- control_panel.py
