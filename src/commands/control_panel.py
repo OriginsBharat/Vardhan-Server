@@ -108,23 +108,10 @@ class ControlPanel(commands.Cog):
             color=discord.Color.gold()
         )
 
-        # Add master commands
         for command in self.master.commands:
             if command.name != 'help':
                 signature = f"!master {command.name} {command.signature}"
                 embed.add_field(name=f"`{signature}`", value=command.help or "No description provided.", inline=False)
-
-        # Add justice commands
-        justice_cog = self.bot.get_cog("Justice")
-        if justice_cog:
-            for command in justice_cog.get_commands():
-                if isinstance(command, commands.Group):
-                    for sub_command in command.commands:
-                        signature = f"!{command.name} {sub_command.name} {sub_command.signature}"
-                        embed.add_field(name=f"`{signature}`", value=sub_command.help or "No description provided.", inline=False)
-                else:
-                    signature = f"!{command.name} {command.signature}"
-                    embed.add_field(name=f"`{signature}`", value=command.help or "No description provided.", inline=False)
 
         commands_list_channel = discord.utils.get(ctx.guild.channels, name="bot-commands-list")
         if commands_list_channel:
@@ -139,25 +126,18 @@ class ControlPanel(commands.Cog):
     async def handle_possession(self, message: discord.Message):
         """
         This method is called by the bot's on_message event when possession is active.
-        It sends the Master's message through a webhook as the possessed character.
         """
-        # Let the release command be processed by the bot normally
         if message.content.lower().strip() == "!master release":
             await self.bot.process_commands(message)
             return
 
-        # Delete the Master's original message to maintain the illusion
         try:
             await message.delete()
-        except discord.Forbidden:
-            self.logger.warning("Could not delete Master's message, missing permissions.")
-        except discord.NotFound:
+        except (discord.Forbidden, discord.NotFound):
             pass
 
-        # Send the message via webhook
         try:
             webhook = await self.get_webhook(message.channel)
-            # In a future update, this could fetch persona-specific avatar URLs
             avatar_url = self.bot.user.avatar.url if self.bot.user.avatar else None
             await webhook.send(
                 content=message.content,
@@ -166,11 +146,10 @@ class ControlPanel(commands.Cog):
             )
         except Exception as e:
             self.logger.error(f"Failed to send possessed message via webhook: {e}")
-            # Notify the master discreetly if sending fails
             try:
-                await message.author.send(f"**Possession Error:** Could not send message as {self.possessed_bot_persona.name} in #{message.channel.name}. I may be missing Webhook permissions there.")
+                await message.author.send(f"**Possession Error:** Could not send message as {self.possessed_bot_persona.name} in #{message.channel.name}.")
             except discord.Forbidden:
-                pass # Can't even DM the master, log is enough.
+                pass
 
 async def setup(bot):
     await bot.add_cog(ControlPanel(bot))

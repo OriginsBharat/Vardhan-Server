@@ -46,10 +46,13 @@ class LoanManager:
         loan_id = str(uuid.uuid4())[:8]
         due_date = (datetime.now() + timedelta(days=duration_days)).isoformat()
 
-        transaction_success = self.bot.economy_manager.transaction(lender, borrower, amount)
-        if not transaction_success:
-            self.logger.error(f"Loan creation failed: Could not transfer principal from {lender} to {borrower}.")
+        # The 'system_escrow' account conceptually holds the funds.
+        if not self.bot.economy_manager.transaction(lender, "system_escrow", amount):
+            self.logger.error(f"Loan creation failed: Could not transfer principal from {lender} to escrow.")
             return None
+
+        # Now pay the borrower from escrow
+        self.bot.economy_manager.transaction("system_escrow", borrower, amount)
 
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -63,6 +66,7 @@ class LoanManager:
             return loan_id
         except sqlite3.Error as e:
             self.logger.error(f"Failed to create loan record: {e}")
+            # Attempt to revert the transaction if DB write fails
             self.bot.economy_manager.transaction(borrower, lender, amount)
             return None
 
@@ -102,7 +106,6 @@ class LoanManager:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                # Use a transaction to ensure atomicity
                 cursor.execute("BEGIN TRANSACTION")
                 cursor.execute("SELECT * FROM loans WHERE status = 'active' AND due_date < ?", (now,))
                 loans_to_default = cursor.fetchall()
@@ -111,25 +114,21 @@ class LoanManager:
                     loan = dict(loan_data)
                     loan_id = loan['loan_id']
 
-                    # 1. Update loan status to 'defaulted'
                     cursor.execute("UPDATE loans SET status = 'defaulted' WHERE loan_id = ?", (loan_id,))
-
-                    # 2. Enslave the borrower
                     cursor.execute(
                         "INSERT OR REPLACE INTO servitude (servant_name, master_name, originating_loan_id) VALUES (?, ?, ?)",
                         (loan['borrower_name'], loan['lender_name'], loan['loan_id'])
                     )
 
                     defaulted_loans.append(loan)
-                    self.logger.warning(f"Loan {loan_id} for {loan['borrower_name']} has defaulted and they are now enslaved to {loan['lender_name']}.")
+                    self.logger.warning(f"Loan {loan_id} for {loan['borrower_name']} has defaulted. They are now enslaved to {loan['lender_name']}.")
 
-                    # Inflict the psychological scar of servitude
                     self.bot.scar_manager.add_scar(
                         character_name=loan['borrower_name'],
                         scar_description=f"Forced into indentured servitude under {loan['lender_name']} after defaulting on a loan."
                     )
 
-                cursor.execute("COMMIT")
+                conn.commit()
             return defaulted_loans
         except sqlite3.Error as e:
             self.logger.error(f"Failed to check for loan defaults: {e}")

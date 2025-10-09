@@ -23,3 +23,6 @@ chatterbox-ai
 # For creating the startup shortcut on Windows
 winshell
 pywin32
+
+# For the Graphical Setup Wizard
+customtkinter

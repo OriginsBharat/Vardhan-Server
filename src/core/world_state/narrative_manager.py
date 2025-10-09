@@ -27,12 +27,14 @@ class NarrativeManager:
         """
         Generates the daily journal entry using Maya's persona and posts it.
         """
+        journal_channel = discord.utils.get(self.bot.get_all_channels(), name="masters-journal")
+        if not journal_channel:
+            self.logger.warning("Could not find #masters-journal channel to post the daily summary.")
+            return
+
         if not self.daily_events:
             self.logger.info("No significant events today for the Master's Journal.")
-            # Optionally send a message that it was a quiet day
-            journal_channel = discord.utils.get(self.bot.get_all_channels(), name="masters-journal")
-            if journal_channel:
-                await journal_channel.send("*A quiet day passes in the Vardhan Empire. The world is calm.*")
+            await journal_channel.send("*A quiet day passes in the Vardhan Empire. The world is calm.*")
             return
 
         self.logger.info("Generating Master's Journal for the day...")
@@ -54,13 +56,8 @@ class NarrativeManager:
 
         journal_text = await self.bot.ollama_client.generate_text(prompt, self.bot.config.llm_model)
 
-        if "Error:" in journal_text:
+        if "Error:" in journal_text or not journal_text:
             self.logger.error(f"Failed to generate journal entry from Ollama: {journal_text}")
-            return
-
-        journal_channel = discord.utils.get(self.bot.get_all_channels(), name="masters-journal")
-        if not journal_channel:
-            self.logger.warning("Could not find #masters-journal channel to post the daily summary.")
             return
 
         embed = discord.Embed(

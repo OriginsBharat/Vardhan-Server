@@ -19,6 +19,10 @@ from core.economic_system.loan_manager import LoanManager
 from core.economic_system.black_market_manager import BlackMarketManager
 from core.character_system.scar_manager import ScarManager
 from core.world_state.arena_manager import ArenaManager
+from core.world_state.interaction_manager import InteractionManager
+from core.economic_system.contract_manager import ContractManager
+from core.world_state.autonomous_actions import AutonomousActionManager
+from core.world_state.event_ai import EventAI
 from utils.discord_utils import get_or_create_category, get_or_create_channel
 
 class MasterBot(commands.Bot):
@@ -48,6 +52,10 @@ class MasterBot(commands.Bot):
         self.scar_manager = ScarManager(self)
         self.black_market_manager = BlackMarketManager(self)
         self.arena_manager = ArenaManager(self)
+        self.interaction_manager = InteractionManager(self)
+        self.contract_manager = ContractManager(self)
+        self.autonomous_action_manager = AutonomousActionManager(self)
+        self.event_ai = EventAI(self)
         self.job_manager = None # Will be initialized in main.py
         self.logger = logging.getLogger(__name__)
 
@@ -59,7 +67,7 @@ class MasterBot(commands.Bot):
             if filename.endswith('.py') and not filename.startswith('__'):
                 try:
                     # Corrected path for loading extensions from the 'src' directory
-                    await self.load_extension(f'commands.{filename[:-3]}')
+                    await self.load_extension(f'src.commands.{filename[:-3]}')
                     self.logger.info(f"Loaded command extension: {filename}")
                 except Exception as e:
                     self.logger.error(f"Failed to load command {filename}: {e}")

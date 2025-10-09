@@ -15,6 +15,7 @@ class Persona:
         self.aura_color = int(data.get("aura_color", "0xFFFFFF"), 16)
         self.schedule = data.get("schedule", {})
         self.voice_reference = data.get("voice")
+        self.power_level = data.get("power_level", 10) # Default to a low power level
 
         self.kinks = kinks
         self.scars: List[str] = [] # Will be populated by the ScarManager

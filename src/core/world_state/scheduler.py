@@ -13,6 +13,8 @@ class Scheduler:
         self._task = None
         self.last_default_check_minute = -1
         self.last_neediness_check_minute = -1
+        self.last_autonomy_check_minute = -1
+        self.last_madness_check_minute = -1
         self.last_journal_post_day = -1
 
     def start(self):
@@ -57,10 +59,31 @@ class Scheduler:
                     self.last_neediness_check_minute = current_minute
                     await self.check_bot_needs()
 
+                # 5. Handle autonomous creative action checks (e.g., every 20 minutes)
+                if current_minute % 20 == 0 and current_minute != self.last_autonomy_check_minute:
+                    self.last_autonomy_check_minute = current_minute
+                    await self.check_for_autonomous_actions()
+
+                # 6. Handle Director AI 'Whispers of Madness' checks (e.g., every 30 minutes)
+                if current_minute % 30 == 0 and current_minute != self.last_madness_check_minute:
+                    self.last_madness_check_minute = current_minute
+                    await self.check_for_madness()
+
             except Exception as e:
                 self.logger.error(f"Error in scheduler loop: {e}", exc_info=True)
 
             await asyncio.sleep(60) # Check again in one minute
+
+    async def check_for_autonomous_actions(self):
+        """Triggers the autonomous action manager for each bot."""
+        self.logger.info("Scheduler: Checking for autonomous creative actions...")
+        for persona in self.bot.persona_manager.personas.values():
+            await self.bot.autonomous_action_manager.consider_creative_action(persona)
+
+    async def check_for_madness(self):
+        """Triggers the Event AI to consider a 'Whispers of Madness' event."""
+        self.logger.info("Scheduler: Checking for Whispers of Madness event...")
+        await self.bot.event_ai.consider_whispers_of_madness()
 
     async def check_bot_needs(self):
         """Checks if a bot's neediness is high enough to DM the Master."""
