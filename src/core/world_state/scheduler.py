@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from datetime import datetime, time
+from datetime import datetime
+import discord
 
 class Scheduler:
     """
@@ -14,7 +15,7 @@ class Scheduler:
 
     def start(self):
         """Starts the main scheduling loop."""
-        if self._task is None:
+        if self._task is None or self._task.done():
             self._task = asyncio.create_task(self._run_scheduler())
             self.logger.info("Scheduler started.")
 
@@ -34,53 +35,45 @@ class Scheduler:
                 now = datetime.now().time()
 
                 for persona in self.bot.persona_manager.personas.values():
-                    await self.check_and_trigger_action(persona, now)
+                    # This check is now part of the handle_scheduled_event
+                    await self.handle_scheduled_event(persona, now)
 
             except Exception as e:
-                self.logger.error(f"Error in scheduler loop: {e}")
+                self.logger.error(f"Error in scheduler loop: {e}", exc_info=True)
 
-            await asyncio.sleep(60) # Check every minute
+            await asyncio.sleep(60)
 
-    async def check_and_trigger_action(self, persona, current_time):
+    async def handle_scheduled_event(self, persona, current_time):
         """
         Checks a persona's schedule and triggers actions if the time matches.
         """
+        if not persona.schedule:
+            return
+
         for event, event_time_str in persona.schedule.items():
             event_time = datetime.strptime(event_time_str, '%H:%M').time()
 
-            # Check if the current time is within a minute of the scheduled event time
             if event_time.hour == current_time.hour and event_time.minute == current_time.minute:
                 self.logger.info(f"Triggering '{event}' for {persona.name} at {current_time}.")
-                await self.handle_scheduled_event(persona, event)
 
-    async def handle_scheduled_event(self, persona, event_name: str):
-        """
-        Handles the logic for a specific scheduled event.
-        This is where you would define what "work" or "sleep" means.
-        """
-        # Example: Announce the action in a general channel
-        channel = discord.utils.get(self.bot.get_all_channels(), name='general-chat')
-        if not channel:
-            self.logger.warning("Could not find 'general-chat' to announce schedule event.")
-            return
+                channel = discord.utils.get(self.bot.get_all_channels(), name='general-chat')
+                if not channel:
+                    self.logger.warning("Could not find 'general-chat' to announce schedule event.")
+                    return
 
-        message = ""
-        if event_name == "wake_up":
-            message = f"{persona.name} is waking up and starting their day."
-            # Here you could modify emotional state, e.g., reset sleepiness
-        elif event_name == "go_to_work":
-            message = f"{persona.name} is now heading to work."
-            # Trigger economic activity
-            await self.bot.economy_manager.perform_work(persona)
-        elif event_name == "free_time":
-            message = f"{persona.name} is now enjoying some free time."
-            # Could trigger autonomous interactions, art generation, etc.
-        elif event_name == "go_to_sleep":
-            message = f"{persona.name} is heading to bed for the night."
-            # Modify emotional state for rest
+                message = ""
+                if event == "wake_up":
+                    message = f"☀️ {persona.name} is waking up and starting their day."
+                elif event == "go_to_work":
+                    # The actual work logic will be more complex
+                    message = f"💼 {persona.name} is now heading to work."
+                elif event == "free_time":
+                    message = f"☕ {persona.name} is now enjoying some free time."
+                elif event == "go_to_sleep":
+                    message = f"🌙 {persona.name} is heading to bed for the night."
 
-        if message:
-            try:
-                await channel.send(message)
-            except Exception as e:
-                self.logger.error(f"Failed to send schedule message for {persona.name}: {e}")
+                if message:
+                    try:
+                        await channel.send(message)
+                    except Exception as e:
+                        self.logger.error(f"Failed to send schedule message for {persona.name}: {e}")

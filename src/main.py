@@ -1,5 +1,6 @@
 import os
 import asyncio
+import logging
 from dotenv import load_dotenv
 from bot import MasterBot
 from config import Config
@@ -33,12 +34,17 @@ async def main():
         chatterbox_client=chatterbox_client
     )
 
-    await bot.start(config.discord_bot_token)
+    try:
+        await bot.start(config.discord_bot_token)
+    except discord.errors.LoginFailure:
+        logging.critical("LOGIN FAILED: The provided DISCORD_BOT_TOKEN is invalid. Please check your .env file.")
+    except Exception as e:
+        logging.critical(f"An unexpected error occurred during bot startup: {e}")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Shutting down the AI World...")
+        print("\nShutting down the AI World...")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"A critical error forced the application to stop: {e}")

@@ -1,25 +1,24 @@
-import httpx
 import logging
 import os
 import uuid
+import asyncio
 
 class ChatterboxClient:
     """
-    Client for interacting with a Chatterbox-like voice generation service.
-    For this project, we will simulate this by calling the chatterbox library directly
-    as a local function, since it's a Python library, not a server.
+    Client for interacting with the Chatterbox voice generation library.
     """
-    def __init__(self, url: str): # URL is kept for consistency but not used
+    def __init__(self, url: str):
         self.logger = logging.getLogger(__name__)
-        # In a real-world scenario with a separate server, you'd use the URL.
-        # Here, we'll import the library directly.
+        # The URL is kept for consistency with other clients but is not used
+        # as Chatterbox is a library, not a separate server.
         try:
             from chatterbox import Chatter, Voice
             self.Chatter = Chatter
             self.Voice = Voice
             self.engine_ready = True
+            self.logger.info("Chatterbox voice engine initialized successfully.")
         except ImportError:
-            self.logger.warning("Chatterbox library not found. Voice generation will be disabled.")
+            self.logger.warning("Chatterbox library not found. Voice generation will be disabled. Please run 'pip install chatterbox-ai'.")
             self.engine_ready = False
 
     async def generate_voice(self, text: str, character_name: str) -> str:
@@ -41,26 +40,31 @@ class ChatterboxClient:
         reference_voice_path = os.path.join("data", "voices", f"{character_name}.wav")
         if not os.path.exists(reference_voice_path):
             self.logger.error(f"Reference voice for {character_name} not found at {reference_voice_path}")
-            return f"Error: Reference voice file '{character_name}.wav' not found."
+            return f"Error: Reference voice file '{character_name}.wav' not found in data/voices/."
 
         try:
-            # Create a new Chatter instance
-            chatter = self.Chatter()
+            # Chatterbox operations can be blocking, run them in a separate thread
+            # to avoid blocking the bot's asynchronous event loop.
+            loop = asyncio.get_running_loop()
 
-            # Create a voice object from the reference file
-            voice = self.Voice(path=reference_voice_path)
+            # Define the synchronous part of the work
+            def _generate():
+                chatter = self.Chatter()
+                voice = self.Voice(path=reference_voice_path)
 
-            # Generate the audio
-            audio_file_path = os.path.join("data", "voices", "generated", f"{character_name}_speech_{uuid.uuid4()}.wav")
+                output_dir = os.path.join("data", "voices", "generated")
+                os.makedirs(output_dir, exist_ok=True)
 
-            # Ensure the output directory exists
-            os.makedirs(os.path.dirname(audio_file_path), exist_ok=True)
+                audio_file_path = os.path.join(output_dir, f"{character_name}_speech_{uuid.uuid4()}.wav")
+                chatter.say(text, voice=voice, path=audio_file_path)
+                return audio_file_path
 
-            chatter.say(text, voice=voice, path=audio_file_path)
+            # Run the synchronous function in a default executor (thread pool)
+            audio_file_path = await loop.run_in_executor(None, _generate)
 
             self.logger.info(f"Successfully generated voice file at {audio_file_path}")
             return audio_file_path
 
         except Exception as e:
-            self.logger.error(f"An unexpected error occurred during voice generation: {e}")
+            self.logger.error(f"An unexpected error occurred during voice generation for {character_name}: {e}")
             return "Error: An unexpected error occurred while generating the voice."

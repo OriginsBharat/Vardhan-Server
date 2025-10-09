@@ -17,7 +17,7 @@ pinecone-client
 sentence-transformers
 
 # Voice Generation
-chatterbox
+chatterbox-ai
 
 # Optional for shortcut creation on Windows
 winshell

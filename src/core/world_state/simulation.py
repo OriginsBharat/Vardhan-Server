@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime, timedelta
+import asyncio
+import discord
 
 class SimulationManager:
     """
@@ -20,43 +22,64 @@ class SimulationManager:
                 return datetime.fromisoformat(timestamp_str)
         except (FileNotFoundError, ValueError):
             self.logger.warning("Last online time not found, assuming this is the first run.")
+            # On first run, we don't want to simulate anything.
+            self.record_current_time()
             return datetime.now()
 
     def record_current_time(self):
         """Writes the current timestamp to the last online file."""
-        with open(self.last_online_file, 'w') as f:
-            f.write(datetime.now().isoformat())
+        try:
+            with open(self.last_online_file, 'w') as f:
+                f.write(datetime.now().isoformat())
+        except Exception as e:
+            self.logger.error(f"Failed to record current time: {e}")
 
     async def run_offline_simulation(self):
         """
         Runs the simulation for the period the bot was offline.
         """
+        await self.bot.wait_until_ready()
         last_online = self.get_last_online_time()
         now = datetime.now()
         time_offline = now - last_online
 
-        if time_offline.total_seconds() < 120: # Don't run simulation for short downtimes
+        # Only run simulation for significant downtime (e.g., more than 5 minutes)
+        if time_offline.total_seconds() < 300:
             self.logger.info("Bot was offline for a very short period. Skipping simulation.")
+            # Still record the current time to mark the bot as having been online.
             self.record_current_time()
             return
 
         self.logger.info(f"Bot was offline for {time_offline}. Running simulation...")
+
+        # Announce the start of the simulation
+        announcement_channel = discord.utils.get(self.bot.get_all_channels(), name='announcements')
+        if announcement_channel:
+            await announcement_channel.send(
+                f"**[SYSTEM]** The world awakens after a slumber of {str(time_offline).split('.')[0]}.\n"
+                f"Simulating the lost time... The world is catching up."
+            )
 
         # Iterate through each minute the bot was offline
         current_sim_time = last_online
         while current_sim_time < now:
             for persona in self.bot.persona_manager.personas.values():
                 # We reuse the scheduler's logic to check for events
-                await self.bot.scheduler.check_and_trigger_action(persona, current_sim_time.time())
+                await self.bot.scheduler.handle_scheduled_event(persona, current_sim_time.time())
 
+            # Increment by one minute
             current_sim_time += timedelta(minutes=1)
+            # Add a small sleep to prevent blocking the event loop entirely during a long simulation
+            if current_sim_time.minute % 30 == 0: # Sleep every 30 simulated minutes
+                 await asyncio.sleep(0.01)
+
 
         self.logger.info("Offline simulation complete.")
-        # Record the new "last online" time
-        self.record_current_time()
 
-        # Announce the simulation results
-        channel = discord.utils.get(self.bot.get_all_channels(), name='announcements')
-        if channel:
-            await channel.send(f"**[SYSTEM]** The world has progressed. The time is now {now.strftime('%Y-%m-%d %H:%M:%S')}. The following events occurred while you were away...")
-            # Here you could add a more detailed summary of simulated events if desired.
+        if announcement_channel:
+            await announcement_channel.send(
+                f"**[SYSTEM]** The simulation is complete. The world has caught up to the present moment."
+            )
+
+        # IMPORTANT: Record the new "last online" time *after* the simulation is done.
+        self.record_current_time()

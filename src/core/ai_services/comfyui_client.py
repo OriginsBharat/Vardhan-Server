@@ -5,6 +5,7 @@ import time
 import os
 import uuid
 from urllib.parse import urljoin
+import asyncio
 
 class ComfyUIClient:
     """
@@ -27,7 +28,7 @@ class ComfyUIClient:
         """
         self.logger.info(f"Generating image for prompt: {prompt}")
 
-        # A standard, simple text-to-image workflow for SDXL
+        # Standard, simple text-to-image workflow for SDXL
         workflow_prompt = {
             "3": {
                 "class_type": "KSampler",
@@ -68,7 +69,7 @@ class ComfyUIClient:
             "7": {
                 "class_type": "CLIPTextEncode",
                 "inputs": {
-                    "text": "text, wAtermark, ugly, deformed",
+                    "text": "text, watermark, ugly, deformed, blurry",
                     "clip": ["4", 1]
                 }
             },
@@ -90,7 +91,6 @@ class ComfyUIClient:
 
         try:
             async with httpx.AsyncClient(timeout=300.0) as client:
-                # Queue the prompt
                 post_url = urljoin(self.api_url, "/prompt")
                 response = await client.post(post_url, json={"prompt": workflow_prompt})
                 response.raise_for_status()
@@ -100,7 +100,6 @@ class ComfyUIClient:
 
                 self.logger.info(f"Prompt queued with ID: {prompt_id}")
 
-                # Wait for the image to be generated
                 while True:
                     history_url = urljoin(self.api_url, f"/history/{prompt_id}")
                     history_res = await client.get(history_url)
@@ -109,31 +108,26 @@ class ComfyUIClient:
 
                     if prompt_id in history_data and history_data[prompt_id].get("outputs"):
                         outputs = history_data[prompt_id]["outputs"]
-                        # Find the output from the SaveImage node
                         for node_id, node_output in outputs.items():
                             if 'images' in node_output:
                                 image_data = node_output['images'][0]
                                 filename = image_data['filename']
-                                # The API returns the filename, we need to construct the path to get it
-                                # Assuming ComfyUI's output directory is the default
-                                # The image is fetched from the /view endpoint
+
                                 view_url = urljoin(self.api_url, f"/view?filename={filename}&subfolder={image_data.get('subfolder', '')}&type={image_data.get('type', 'output')}")
 
                                 image_response = await client.get(view_url)
                                 image_response.raise_for_status()
 
-                                # Save the image locally
-                                if not os.path.exists("art_gallery"):
-                                    os.makedirs("art_gallery")
+                                os.makedirs("art_gallery", exist_ok=True)
                                 file_path = os.path.join("art_gallery", filename)
                                 with open(file_path, "wb") as f:
                                     f.write(image_response.content)
 
                                 self.logger.info(f"Image successfully generated and saved to {file_path}")
                                 return file_path
-                        break # break if processed
+                        break
 
-                    await asyncio.sleep(2) # Poll every 2 seconds
+                    await asyncio.sleep(2)
 
                 raise ValueError("Image generation completed, but no image output was found.")
 

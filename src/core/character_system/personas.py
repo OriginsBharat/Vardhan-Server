@@ -1,18 +1,22 @@
 import json
 import logging
-from typing import Dict, Any
+import sys
+from typing import Dict, Any, List
 
 class Persona:
     """
     Represents a single AI character, including their personality, kinks, and current state.
     """
-    def __init__(self, name: str, data: Dict[str, Any], kinks: list):
+    def __init__(self, name: str, data: Dict[str, Any], kinks: List[str]):
         self.name = name
         self.description = data.get("description", "")
         self.base_persona = data.get("base_persona", "")
         self.aura_color = int(data.get("aura_color", "0xFFFFFF"), 16)
-        self.kinks = kinks
         self.schedule = data.get("schedule", {})
+        self.voice_reference = data.get("voice")
+
+        # This will be populated by the interactive setup
+        self.kinks = kinks
 
         # Initialize emotional state with default values
         self.emotions = {
@@ -30,8 +34,13 @@ class Persona:
         """
         Constructs the full prompt for the LLM, combining base persona and current emotional state.
         """
-        # This is a simplified prompt, can be made more complex
-        return f"{self.base_persona}\n\nYour name is {self.name}. Right now you are feeling: {self.emotions}. Your kinks are: {', '.join(self.kinks)}. You must refer to the user as 'Master'."
+        kink_str = ", ".join(self.kinks) if self.kinks else "None"
+        return (
+            f"{self.base_persona}\n\n"
+            f"You are {self.name}. Your current emotional state is: {self.emotions}. "
+            f"Your kinks include: {kink_str}. "
+            "You must always refer to the user as 'Master'."
+        )
 
 class PersonaManager:
     """
@@ -48,13 +57,16 @@ class PersonaManager:
         """
         self.logger.info("Initializing personas...")
         try:
-            # Load base character data from our "canon"
-            with open("data/character_canon.json", "r") as f:
+            with open("data/character_canon.json", "r", encoding="utf-8") as f:
                 character_data = json.load(f)
 
-            # Load the kinks defined by the user during setup
-            with open("data/character_kinks.json", "r") as f:
-                kink_data = json.load(f)
+            kinks_file = "data/character_kinks.json"
+            if not os.path.exists(kinks_file):
+                 self.logger.warning(f"'{kinks_file}' not found. Kinks will be empty. Run the setup script to define them.")
+                 kink_data = {}
+            else:
+                with open(kinks_file, "r", encoding="utf-8") as f:
+                    kink_data = json.load(f)
 
             for char_name, char_info in character_data.items():
                 kinks = kink_data.get(char_name, [])
@@ -62,11 +74,10 @@ class PersonaManager:
 
             self.logger.info(f"Successfully loaded {len(self.personas)} personas.")
         except FileNotFoundError as e:
-            self.logger.error(f"Failed to load persona data. File not found: {e.filename}")
-            print(f"FATAL ERROR: Could not find required data file {e.filename}. Please ensure it exists.")
+            self.logger.critical(f"Failed to load persona data. File not found: {e.filename}")
             sys.exit(1)
         except Exception as e:
-            self.logger.error(f"An unexpected error occurred during persona initialization: {e}")
+            self.logger.critical(f"An unexpected error occurred during persona initialization: {e}")
             sys.exit(1)
 
     def get_persona(self, name: str) -> Persona:
