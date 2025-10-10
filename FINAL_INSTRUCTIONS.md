@@ -27,16 +27,16 @@ First, you need to install the three core programs that will power your world's 
 
 ---
 
-### **Part 2: The Two-Step World Setup**
+### **Part 2: The "One-Click" World Setup**
 
 Now that the AI engines are installed, you can run the final setup to bring everything together.
 
-**Step 1: Install Dependencies**
-*   **Action:** In the project folder, find and double-click the `pre_setup.bat` file.
-*   **Action:** A command prompt will appear and install all the necessary Python libraries. Wait for it to finish and say "You may now run SETUP_THE_WORLD.py." You can then close that window.
+**Step 1: Run the Setup Launcher**
+*   **Action:** In the project folder, find and double-click the `RUN_SETUP.bat` file.
+*   **Action:** A command prompt will appear and install all the necessary Python libraries. When it's done, it will automatically launch the graphical setup wizard for you.
 
-**Step 2: Run the Graphical Setup Wizard**
-*   **Action:** Now, double-click `SETUP_THE_WORLD.py` to run it. The graphical setup wizard will now open.
+**Step 2: Use the Graphical Setup Wizard**
+*   The graphical setup wizard will now be open.
 *   **Have this information ready to paste in when it asks:**
     *   **Your Discord Secrets:** `DISCORD_BOT_TOKEN`, `DISCORD_GUILD_ID` (the ID of your server), and your personal `USER_ID`.
     *   **The Folder Path to ComfyUI:** The full path to where you extracted ComfyUI (e.g., `C:\MyAIWorld\ComfyUI`).
