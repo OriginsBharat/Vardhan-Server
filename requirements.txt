@@ -16,9 +16,10 @@ pinecone-client
 # Sentence Transformer for creating memory embeddings
 sentence-transformers
 
-# Voice Generation
-# Assuming a library name, this might need adjustment
-chatterbox-ai
+# Voice Generation (XTTS)
+# The official Coqui TTS library. The package manager will find a version
+# compatible with the user's Python version.
+TTS
 
 # For creating the startup shortcut on Windows
 winshell
