@@ -1,6 +1,5 @@
 import os
 import sys
-import subprocess
 import json
 import winshell
 from win32com.client import Dispatch
@@ -218,7 +217,7 @@ class SetupApp(ctk.CTk):
         try:
             startup_folder = winshell.startup()
             script_path = os.path.join(os.getcwd(), "invisible_launcher.vbs")
-            shortcut_path = os.path.join(startup_folder, "MyAIWorldLauncher.lnk")
+            shortcut_path = on.path.join(startup_folder, "MyAIWorldLauncher.lnk")
 
             shell = Dispatch('WScript.Shell')
             shortcut = shell.CreateShortCut(shortcut_path)
