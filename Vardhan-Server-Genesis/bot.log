@@ -1,0 +1,18 @@
+2025-10-11 03:48:14,897 - root - INFO - --- Starting Application ---
+2025-10-11 03:48:14,899 - core.ai_services.ollama_client - INFO - OllamaClient initialized for model 'dolphin-2.2.1-mistral:7b-q4_K_M' at http://127.0.0.1:11434
+2025-10-11 03:48:14,899 - core.character_system.persona - INFO - Initializing PersonaManager for the full Pantheon...
+2025-10-11 03:48:14,899 - Persona.Maya - INFO - Persona 'Maya' initialized in memory.
+2025-10-11 03:48:14,899 - Persona.Eka - INFO - Persona 'Eka' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Dvi - INFO - Persona 'Dvi' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Tri - INFO - Persona 'Tri' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Chatur - INFO - Persona 'Chatur' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Panch - INFO - Persona 'Panch' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Shash - INFO - Persona 'Shash' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Sapt - INFO - Persona 'Sapt' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Asht - INFO - Persona 'Asht' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Nav - INFO - Persona 'Nav' initialized in memory.
+2025-10-11 03:48:14,900 - Persona.Dash - INFO - Persona 'Dash' initialized in memory.
+2025-10-11 03:48:14,900 - core.character_system.persona - INFO - Successfully loaded 11 personas.
+2025-10-11 03:48:14,902 - core.economic_system.economy_manager - INFO - Economy database (wallets table) initialized successfully.
+2025-10-11 03:48:14,902 - root - INFO - The Core is awakening...
+2025-10-11 03:48:14,902 - discord.client - INFO - logging in using static token

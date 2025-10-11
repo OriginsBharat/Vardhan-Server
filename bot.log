@@ -1,0 +1,25 @@
+2025-10-11 03:12:39,514 - root - INFO - --- Starting Application ---
+2025-10-11 03:12:39,516 - src.core.ai_services.ollama_client - INFO - OllamaClient initialized for model 'dolphin-2.2.1-mistral:7b-q4_K_M' at http://127.0.0.1:11434
+2025-10-11 03:12:39,516 - src.core.character_system.persona - INFO - Initializing PersonaManager for the full Pantheon...
+2025-10-11 03:12:39,516 - src.core.character_system.persona - CRITICAL - Failed to load persona data: [Errno 2] No such file or directory: 'data/character_canon.json'
+Traceback (most recent call last):
+  File "/app/Vardhan-Server-Genesis/src/core/character_system/persona.py", line 49, in _initialize_personas
+    with open("data/character_canon.json", "r", encoding="utf-8") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/character_canon.json'
+2025-10-11 03:12:39,517 - root - CRITICAL - An unexpected error occurred during bot startup: [Errno 2] No such file or directory: 'data/character_canon.json'
+Traceback (most recent call last):
+  File "/app/Vardhan-Server-Genesis/src/main.py", line 26, in main
+    bot = MasterBot()
+          ^^^^^^^^^^^
+  File "/app/Vardhan-Server-Genesis/src/bot.py", line 25, in __init__
+    self.persona_manager = PersonaManager()
+                           ^^^^^^^^^^^^^^^^
+  File "/app/Vardhan-Server-Genesis/src/core/character_system/persona.py", line 43, in __init__
+    self._initialize_personas()
+  File "/app/Vardhan-Server-Genesis/src/core/character_system/persona.py", line 58, in _initialize_personas
+    raise e
+  File "/app/Vardhan-Server-Genesis/src/core/character_system/persona.py", line 49, in _initialize_personas
+    with open("data/character_canon.json", "r", encoding="utf-8") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/character_canon.json'

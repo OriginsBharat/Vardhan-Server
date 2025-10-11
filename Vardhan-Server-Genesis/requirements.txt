@@ -1,0 +1,27 @@
+# Discord Bot
+discord.py
+
+# Environment variables
+python-dotenv
+
+# HTTP requests for AI services
+httpx
+
+# Cryptography for Discord voice
+PyNaCl
+
+# Vector Database for Universe Memory
+pinecone-client
+
+# Sentence Transformer for creating memory embeddings
+sentence-transformers
+
+# Voice Generation (Coqui AI)
+coqui-tts
+
+# GUI Framework
+customtkinter
+
+# For accessing Windows special folders (like Startup)
+winshell
+pywin32; sys_platform == 'win32'
