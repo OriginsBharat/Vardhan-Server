@@ -1,0 +1,28 @@
+# Discord Bot
+discord.py
+
+# Environment variables
+python-dotenv
+
+# HTTP requests for AI services
+httpx
+
+# Cryptography for Discord voice
+PyNaCl
+
+# Vector Database for Universe Memory
+pinecone-client
+
+# Sentence Transformer for creating memory embeddings
+sentence-transformers
+
+# Voice Generation
+# Assuming a library name, this might need adjustment
+chatterbox-ai
+
+# For creating the startup shortcut on Windows
+winshell
+pywin32
+
+# For the Graphical Setup Wizard
+customtkinter
