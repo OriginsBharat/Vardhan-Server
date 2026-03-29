@@ -1,0 +1,29 @@
+# Discord Bot
+discord.py
+
+# Environment variables
+python-dotenv
+
+# HTTP requests for AI services
+httpx
+
+# Cryptography for Discord voice
+PyNaCl
+
+# Vector Database for Universe Memory
+pinecone-client
+
+# Sentence Transformer for creating memory embeddings
+sentence-transformers
+
+# Voice Generation (XTTS)
+# The official Coqui TTS library. The package manager will find a version
+# compatible with the user's Python version.
+TTS
+
+# For creating the startup shortcut on Windows
+winshell
+pywin32
+
+# For the Graphical Setup Wizard
+customtkinter
